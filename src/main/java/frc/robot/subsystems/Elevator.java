@@ -84,7 +84,7 @@ public class Elevator extends SubsystemBase {
             // Use default ramp rate (1 V/s)
             null,
             // Reduce dynamic step voltage to 4 to prevent brownout
-            Volts.of(4),
+            Volts.of(2),
             // Use default timeout (10 s)
             null,
             // Log state with Phoenix SignalLogger class
@@ -131,9 +131,9 @@ public class Elevator extends SubsystemBase {
         //   it may stop moving if their built in encoders are not in sync.
         //
         m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 105;
+        m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 113;
         m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 1.25;
+        m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 5.25;
 
         // PID Slot 0
         //
@@ -174,7 +174,7 @@ public class Elevator extends SubsystemBase {
         m_homed = false;
 
         SmartDashboard.putNumber("Elevator kS", 0);
-        SmartDashboard.putNumber("Elevator kG", 0.245);
+        SmartDashboard.putNumber("Elevator kG", 0);
         SmartDashboard.putNumber("Elevator kV", 0.218);
         SmartDashboard.putNumber("Elevator kA", 0.0015); // 0.025 is too big
         SmartDashboard.putNumber("Elevator kP", 2);
@@ -332,15 +332,17 @@ public class Elevator extends SubsystemBase {
                 m_motor.setVoltage(m_demand);    
                 break;
             case kPID:
+                SmartDashboard.putString("Skibidi", "Toilet");
                 m_feedforward = new ElevatorFeedforward(
-                    SmartDashboard.getNumber("Elevator kS", 0),
-                    SmartDashboard.getNumber("Elevator kG", 0),
-                    SmartDashboard.getNumber("Elevator kV", 0),
-                    SmartDashboard.getNumber("Elevator kA", 0)
+                    062733,.235,12525,.004
+             //      0,.235,.4,0
                 );
-                m_pidController.setP(SmartDashboard.getNumber("Elevator kP", 0));
-                m_pidController.setI(SmartDashboard.getNumber("Elevator kI", 0));
-                m_pidController.setD(SmartDashboard.getNumber("Elevator kD", 0));
+                m_pidController.setP(0);
+                m_pidController.setI(0);
+                m_pidController.setD(0);
+//                m_pidController.setP(SmartDashboard.getNumber("Elevator kP", 0));
+  //              m_pidController.setI(SmartDashboard.getNumber("Elevator kI", 0));
+    //            m_pidController.setD(SmartDashboard.getNumber("Elevator kD", 0));
 
         
                 double pidVoltage = m_pidController.calculate(getHeight(), m_demand);
@@ -354,8 +356,8 @@ public class Elevator extends SubsystemBase {
                 SmartDashboard.putNumber("Elevator Output Voltage", pidVoltage);
                 SmartDashboard.putNumber("Elevator PID Output Voltage", feedforwardVoltage);
                 SmartDashboard.putNumber("Elevator Feedfoward Output Voltage", outputVoltage);
-        		SmartDashboard.putNumber("Eleavtor Profile Position", m_pidController.getSetpoint().position);
-        		SmartDashboard.putNumber("Eleavtor Profile Velocity", m_pidController.getSetpoint().velocity);
+        		SmartDashboard.putNumber("Elevator Profile Position", m_pidController.getSetpoint().position);
+        		SmartDashboard.putNumber("Elevator Profile Velocity", m_pidController.getSetpoint().velocity);
 
                 m_pidLastVelocitySetpoint = m_pidController.getSetpoint().velocity;
                 m_pidLastTime = Timer.getFPGATimestamp();

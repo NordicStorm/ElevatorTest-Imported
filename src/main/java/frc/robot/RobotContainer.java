@@ -50,6 +50,7 @@ public class RobotContainer {
   private final Wrist m_wrist = new Wrist();
   private final CoralIntake m_CoralIntake = new CoralIntake();
   private final Climber m_climber = new Climber();
+  
 
   // Replace with CommandPS4Controller or Commandm_driverController if needed
   private final CommandXboxController m_driverController = new CommandXboxController(
@@ -77,6 +78,7 @@ public class RobotContainer {
   public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
   public RobotContainer() {
+    SignalLogger.setPath("/media/sda1/ctre-logs/");
     configureBindings();
   }
 
@@ -96,8 +98,8 @@ public class RobotContainer {
    */
   private void configureBindings() {
 
-    // m_driverController.leftBumper().onTrue(Commands.runOnce(SignalLogger::start));
-    // m_driverController.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop));
+    //m_driverController.leftBumper().onTrue(Commands.runOnce(SignalLogger::start));
+    //m_driverController.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop));
 
     
     //m_driverController Y = quasistatic forward
@@ -114,14 +116,13 @@ public class RobotContainer {
     //SmartDashboard.getNumber("Arm test setpoint", 0)));
 
     m_driverController.back().whileTrue(m_elevator.homeCommand());
-    m_driverController.povUp().whileTrue(m_elevator.openLoopCommand(2));
-    m_driverController.povDown().whileTrue(m_elevator.openLoopCommand(-2));
-    m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.75));
-    m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(.75));
-    m_driverController.povLeft().whileTrue(m_elevator.pidCommand(24));
+    //m_driverController.povUp().whileTrue(m_elevator.openLoopCommand(2));
+    //m_driverController.povDown().whileTrue(m_elevator.openLoopCommand(-2));
+    //m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.75));
+    //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(.75));
+    m_driverController.povLeft().whileTrue(m_elevator.pidCommand(20));
     SmartDashboard.putNumber("Elevator test setpoint", 0);
-    m_driverController.povRight()
-    .whileTrue(m_elevator.pidCommand(() -> SmartDashboard.getNumber("Elevator test setpoint", 0)));
+    m_driverController.povRight().whileTrue(m_elevator.pidCommand(40));
 
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
@@ -153,8 +154,10 @@ public class RobotContainer {
 
 
 
-    m_driverController.povDown().whileTrue(m_climber.openLoopClimbCommand(-.25));
-    m_driverController.povUp().whileTrue(m_climber.openLoopClimbCommand(.25));
+    m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.3));
+    m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.3));
+    m_driverController.povUp().onTrue(m_wrist.setWristHorizontal());
+    m_driverController.povDown().onTrue(m_wrist.setWristVertical());
 
   }
 

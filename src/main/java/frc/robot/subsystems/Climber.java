@@ -41,8 +41,17 @@ public class Climber extends SubsystemBase {
 
     @Override
     public void periodic() {
-        m_liftMotor.set(m_intakeDemand);
-        //m_leftIntakeMotor.set(m_intakeDemand);
-        SmartDashboard.putNumber("Voltage", m_intakeDemand);
+        if (m_intakeDemand > .01){
+            m_liftMotor.setInverted(false);
+            m_liftMotor.set(Math.abs(m_intakeDemand));
+        }
+        else if (m_intakeDemand < .01){
+            m_liftMotor.setInverted(true);
+            m_liftMotor.set(Math.abs(m_intakeDemand));
+        }
+        else
+            this.stop();
+
+        SmartDashboard.putNumber("Climber Voltage", m_intakeDemand);
     }
 }

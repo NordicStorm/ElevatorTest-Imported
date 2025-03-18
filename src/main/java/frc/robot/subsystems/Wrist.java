@@ -1,15 +1,21 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.MechanismConstants;
 import frc.robot.subsystems.Arm.Position;
 
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
-import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.BrushedMotorWiringValue;
+import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorArrangementValue;
+import com.ctre.phoenix6.signals.StaticFeedforwardSignValue;
+import com.ctre.phoenix6.configs.TalonFXSConfiguration;
+import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.hardware.TalonFXS;
 
 
 public class Wrist extends SubsystemBase {
@@ -23,9 +29,9 @@ public class Wrist extends SubsystemBase {
 
     private double m_desiredState;
 
-    private final TalonFXConfiguration wristConfig = new TalonFXConfiguration();
-    private final TalonFX m_wristMotor = new TalonFX(MechanismConstants.kWristID);
-    private final MotionMagicExpoVoltage m_voltage = new MotionMagicExpoVoltage(0);
+    private final TalonFXSConfiguration wristConfig = new TalonFXSConfiguration();
+    private final TalonFXS m_wristMotor = new TalonFXS(MechanismConstants.kWristID);
+    private final PositionVoltage m_voltage = new PositionVoltage(0);
 
     //
     // State
@@ -34,29 +40,20 @@ public class Wrist extends SubsystemBase {
     private ControlMode controlMode = ControlMode.kStop;
 
     public Wrist() {
-        wristConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RemoteCANdiPWM2;
+        wristConfig.ExternalFeedback.ExternalFeedbackSensorSource = ExternalFeedbackSensorSourceValue.RemoteCANdiPWM2;
         // TODO find CAN ID wristConfig.Feedback.FeedbackRemoteSensorID();
+        
+        wristConfig.Slot0.kP = 85; // TODO: A position error of 2.5 rotations results in 12 V output
+        wristConfig.Slot0.kI = 0; // TODO: no output for integrated error
+        wristConfig.Slot0.kD = 5; // TODO: A velocity error of 1 rps results in 0.1 V output
+        wristConfig.Slot0.kS = .75;
+        wristConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
-        wristConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
-        wristConfig.Slot0.kS = 0.11; // TODO: Add 0.25 V output to overcome static friction
-        wristConfig.Slot0.kV = 2.77; // TODO: A velocity target of 1 rps results in 0.12 V output
-        wristConfig.Slot0.kA = 0.0113116; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        wristConfig.Slot0.kP = 30; // TODO: A position error of 2.5 rotations results in 12 V output
-        wristConfig.Slot0.kI = 0.1; // TODO: no output for integrated error
-        wristConfig.Slot0.kD = 0.52411; // TODO: A velocity error of 1 rps results in 0.1 V output
-
-        // Motion Magic
-        wristConfig.MotionMagic.MotionMagicCruiseVelocity = 8.0; // Rotations Per second
-        wristConfig.MotionMagic.MotionMagicAcceleration = 8.0; // Acceleration Rotations per second^2
-        // wristConfig.MotionMagic.MotionMagicCruiseVelocity = 0; // Unlimited cruise
-        // velocity
-        wristConfig.MotionMagic.MotionMagicExpo_kV = 0.12; // kV is around 0.12 V/rps
-        wristConfig.MotionMagic.MotionMagicExpo_kA = 0.1; // Use a slower kA of 0.1 V/(rps/s)
+        wristConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+        wristConfig.Commutation.MotorArrangement = MotorArrangementValue.Brushed_DC;
+        wristConfig.Commutation.BrushedMotorWiring = BrushedMotorWiringValue.Leads_A_and_B;
 
         m_wristMotor.getConfigurator().apply(wristConfig);
-
-
-
     }
 
     public void stop() {
@@ -64,15 +61,18 @@ public class Wrist extends SubsystemBase {
         controlMode = ControlMode.kStop;
     }
 
-    public void setWristRotation(Position position) {
-        m_desiredState = position.wristPos;
+    private void setWristTarget(double position){
+        m_desiredState = position;
         controlMode = ControlMode.kPID;
-
     }
 
-    public void setIntakeVoltage(double IntakeVoltage) {
-        m_Demand = IntakeVoltage;
-        controlMode = ControlMode.kOpenLoop;
+    public Command setWristHorizontal() {
+        return Commands.runOnce(() -> setWristTarget(Constants.MechanismConstants.kWristHorizontalPos), this);
+    }
+
+    public Command setWristVertical(){
+        return Commands.runOnce(() -> setWristTarget(Constants.MechanismConstants.kWristVerticalPos), this);
+
     }
 
     //TODO see if the absolute encoder is actually being used

@@ -24,5 +24,7 @@ public final class Constants {
     public static final int kElevatorMotorFollowerID = 9;
     public static final int kRetractLimitSwitchChannel = 9;
     public static final double kRotationToInches = .418; //1.0/20.0 * ((68.8/25.4)/2) * Math.PI * 2.0;//TODO: Find the correct value
+    public static final double kWristVerticalPos = 0.208008;
+    public static final double kWristHorizontalPos = -0.041992;
   }
 }
