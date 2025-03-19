@@ -30,7 +30,7 @@ public class Wrist extends SubsystemBase {
     private double m_desiredState;
 
     private final TalonFXSConfiguration wristConfig = new TalonFXSConfiguration();
-    private final TalonFXS m_wristMotor = new TalonFXS(MechanismConstants.kWristID);
+    private final TalonFXS m_wristMotor = new TalonFXS(MechanismConstants.kWristID, "rio");
     private final PositionVoltage m_voltage = new PositionVoltage(0);
 
     //
@@ -75,7 +75,6 @@ public class Wrist extends SubsystemBase {
 
     }
 
-    //TODO see if the absolute encoder is actually being used
     public double getWristRotation() {
         return m_wristMotor.getPosition().getValueAsDouble();
     }

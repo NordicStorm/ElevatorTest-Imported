@@ -118,8 +118,6 @@ public class RobotContainer {
     m_driverController.back().whileTrue(m_elevator.homeCommand());
     //m_driverController.povUp().whileTrue(m_elevator.openLoopCommand(2));
     //m_driverController.povDown().whileTrue(m_elevator.openLoopCommand(-2));
-    //m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.75));
-    //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(.75));
     m_driverController.povLeft().whileTrue(m_elevator.pidCommand(20));
     SmartDashboard.putNumber("Elevator test setpoint", 0);
     m_driverController.povRight().whileTrue(m_elevator.pidCommand(40));
@@ -154,11 +152,14 @@ public class RobotContainer {
 
 
 
-    m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.3));
-    m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.3));
+    //m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.3));
+    //m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.3));
+    m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.5));
+    m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(.5));
     m_driverController.povUp().onTrue(m_wrist.setWristHorizontal());
     m_driverController.povDown().onTrue(m_wrist.setWristVertical());
-
+    m_driverController.povLeft().onTrue(m_arm.setArmStraightDownVertical());
+    m_driverController.povRight().onTrue(m_arm.setArmStraightUpVertical());
   }
 
   /**
