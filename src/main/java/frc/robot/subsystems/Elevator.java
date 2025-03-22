@@ -67,13 +67,13 @@ public class Elevator extends SubsystemBase {
     // PID
     //
 
-    private final ProfiledPIDController m_pidController = new ProfiledPIDController(0, 0, 0,
+    private final ProfiledPIDController m_pidController = new ProfiledPIDController(2.4, 0, 0,
         new TrapezoidProfile.Constraints(50, 150));
     private double m_pidLastVelocitySetpoint = 0;
     private double m_pidLastTime;
 
     private ElevatorFeedforward m_feedforward =
-        new ElevatorFeedforward(0, 0.0, 0, 0);
+        new ElevatorFeedforward(0, .28235, .2, .005);
     
     
     //
@@ -141,19 +141,19 @@ public class Elevator extends SubsystemBase {
         // Also note that the gear ratio on the elevator is 20:1, but the effective gear ratio is 10:1 due to ie being cascade 
         // https://www.reca.lc/linear?angle=%7B%22s%22%3A103.582964%2C%22u%22%3A%22deg%22%7D&currentLimit=%7B%22s%22%3A40%2C%22u%22%3A%22A%22%7D&efficiency=100&limitAcceleration=0&limitDeceleration=0&limitVelocity=0&limitedAcceleration=%7B%22s%22%3A400%2C%22u%22%3A%22in%2Fs2%22%7D&limitedDeceleration=%7B%22s%22%3A50%2C%22u%22%3A%22in%2Fs2%22%7D&limitedVelocity=%7B%22s%22%3A10%2C%22u%22%3A%22in%2Fs%22%7D&load=%7B%22s%22%3A30%2C%22u%22%3A%22lbs%22%7D&motor=%7B%22quantity%22%3A2%2C%22name%22%3A%22Kraken%20X60%20%28FOC%29%2A%22%7D&ratio=%7B%22magnitude%22%3A10%2C%22ratioType%22%3A%22Reduction%22%7D&spoolDiameter=%7B%22s%22%3A1.751%2C%22u%22%3A%22in%22%7D&travelDistance=%7B%22s%22%3A30%2C%22u%22%3A%22in%22%7D
         m_motorConfig.Slot0.GravityType = GravityTypeValue.Elevator_Static;
-        m_motorConfig.Slot0.kS = 0.11; // TODO: Add 0.25 V output to overcome static friction
-        m_motorConfig.Slot0.kV = 0.1970; // TODO: A velocity target of 1 rps results in 0.12 V output
-        m_motorConfig.Slot0.kA = 0.0113116; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        m_motorConfig.Slot0.kP = 55.89; // TODO: A position error of 2.5 rotations results in 12 V output
-        m_motorConfig.Slot0.kI = 0.1; // TODO: no output for integrated error
-        m_motorConfig.Slot0.kD = 0.52411; // TODO: A velocity error of 1 rps results in 0.1 V output
+        m_motorConfig.Slot0.kS = 0; // TODO: Add 0.25 V output to overcome static friction .11
+        m_motorConfig.Slot0.kV = 0; // TODO: A velocity target of 1 rps results in 0.12 V output .1970
+        m_motorConfig.Slot0.kA = 0; // TODO: An acceleration of 1 rps/s requires 0.01 V output .0113116
+        m_motorConfig.Slot0.kP = 0; // TODO: A position error of 2.5 rotations results in 12 V output .55.89
+        m_motorConfig.Slot0.kI = 0; // TODO: no output for integrated error .1
+        m_motorConfig.Slot0.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output .52411
 
         // Motion Magic
         m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 8.0; // Rotations Per second
         m_motorConfig.MotionMagic.MotionMagicAcceleration = 8.0; // Acceleration Rotations per second^2
         // m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 0; // Unlimited cruise velocity
-        m_motorConfig.MotionMagic.MotionMagicExpo_kV = 0.12; // kV is around 0.12 V/rps
-        m_motorConfig.MotionMagic.MotionMagicExpo_kA = 0.1; // Use a slower kA of 0.1 V/(rps/s)
+        //m_motorConfig.MotionMagic.MotionMagicExpo_kV = 0.12; // kV is around 0.12 V/rps
+        //m_motorConfig.MotionMagic.MotionMagicExpo_kA = 0.1; // Use a slower kA of 0.1 V/(rps/s)
 
         m_motor.getConfigurator().apply(m_motorConfig);
 
@@ -332,19 +332,7 @@ public class Elevator extends SubsystemBase {
                 m_motor.setVoltage(m_demand);    
                 break;
             case kPID:
-                SmartDashboard.putString("Skibidi", "Toilet");
-                m_feedforward = new ElevatorFeedforward(
-                    062733,.235,12525,.004
-             //      0,.235,.4,0
-                );
-                m_pidController.setP(0);
-                m_pidController.setI(0);
-                m_pidController.setD(0);
-//                m_pidController.setP(SmartDashboard.getNumber("Elevator kP", 0));
-  //              m_pidController.setI(SmartDashboard.getNumber("Elevator kI", 0));
-    //            m_pidController.setD(SmartDashboard.getNumber("Elevator kD", 0));
-
-        
+            
                 double pidVoltage = m_pidController.calculate(getHeight(), m_demand);
                 double dt = Timer.getFPGATimestamp() - m_pidLastTime;
                 double accelerationSetpoint = (m_pidController.getSetpoint().velocity - m_pidLastVelocitySetpoint) / dt;

@@ -17,9 +17,11 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
@@ -225,6 +227,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
          * Otherwise, only check and apply the operator perspective if the DS is disabled.
          * This ensures driving behavior doesn't change until an explicit disable event occurs during testing.
          */
+        SmartDashboard.putNumber("Front Left Encoder", getModule(0).getEncoder().getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("Front Right Encoder", getModule(1).getEncoder().getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("Back Left Encoder", getModule(2).getEncoder().getAbsolutePosition().getValueAsDouble());
+        SmartDashboard.putNumber("Back Right Encoder", getModule(3).getEncoder().getAbsolutePosition().getValueAsDouble());
+       
+
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
             DriverStation.getAlliance().ifPresent(allianceColor -> {
                 setOperatorPerspectiveForward(

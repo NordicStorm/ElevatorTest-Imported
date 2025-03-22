@@ -87,13 +87,23 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot0.kS = .18;
         m_motorConfig.Slot0.kV = .12; // TODO: A velocity target of 1 rps results in 0.12 V output
         m_motorConfig.Slot0.kA = 10; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        m_motorConfig.Slot0.kP = 0; // TODO: A position error of 2.5 rotations results in 12 V output
+        m_motorConfig.Slot0.kP = 37; // TODO: A position error of 2.5 rotations results in 12 V output
         m_motorConfig.Slot0.kI = 0; // TODO: no output for integrated error
         m_motorConfig.Slot0.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
+
+        m_motorConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+        m_motorConfig.Slot1.kG = .3; // TODO: Add 0.25 V output to overcome static friction
+        m_motorConfig.Slot1.kS = .18;
+        m_motorConfig.Slot1.kV = .1; // TODO: A velocity target of 1 rps results in 0.12 V output
+        m_motorConfig.Slot1.kA = 10; // TODO: An acceleration of 1 rps/s requires 0.01 V output
+        m_motorConfig.Slot1.kP = 20; // TODO: A position error of 2.5 rotations results in 12 V output
+        m_motorConfig.Slot1.kI = 0; // TODO: no output for integrated error
+        m_motorConfig.Slot1.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
+
         
-        m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 80; // Rotations Per second
-        m_motorConfig.MotionMagic.MotionMagicAcceleration = 120;
+        m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 60; // Rotations Per second
+        m_motorConfig.MotionMagic.MotionMagicAcceleration = 10;
         // velocity
         m_motorConfig.MotionMagic.MotionMagicExpo_kV = .12; // kV is around 0.12 V/rps
         m_motorConfig.MotionMagic.MotionMagicExpo_kA = .1; // Use a slower kA of 0.1 V/(rps/s)

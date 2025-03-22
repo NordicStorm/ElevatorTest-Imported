@@ -20,6 +20,7 @@ import frc.robot.subsystems.Climber;
 // import frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.SignalLogger;
+import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 
@@ -68,7 +69,7 @@ public class RobotContainer {
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-      .withDeadband(MaxSpeed * 0.1).withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+      .withDeadband(MaxSpeed * 0.2).withRotationalDeadband(MaxAngularRate * 0.2) // Add a 10% deadband
       .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -118,9 +119,7 @@ public class RobotContainer {
     m_driverController.back().whileTrue(m_elevator.homeCommand());
     //m_driverController.povUp().whileTrue(m_elevator.openLoopCommand(2));
     //m_driverController.povDown().whileTrue(m_elevator.openLoopCommand(-2));
-    m_driverController.povLeft().whileTrue(m_elevator.pidCommand(20));
-    SmartDashboard.putNumber("Elevator test setpoint", 0);
-    m_driverController.povRight().whileTrue(m_elevator.pidCommand(40));
+   
 
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
@@ -150,17 +149,24 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
-
-
     //m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.3));
     //m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.3));
-    m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.5));
-    m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(.5));
-    m_driverController.povUp().onTrue(m_wrist.setWristHorizontal());
+    //m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.25)); //Intake
+    //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); //Outake
+    m_driverController.povUp().onTrue(m_wrist.setWristHorizontal()); 
     m_driverController.povDown().onTrue(m_wrist.setWristVertical());
-    m_driverController.povLeft().onTrue(m_arm.setArmStraightDownVertical());
-    m_driverController.povRight().onTrue(m_arm.setArmStraightUpVertical());
+    m_driverController.rightTrigger().whileTrue(m_elevator.pidCommand(10));
+    m_driverController.leftTrigger().whileTrue(m_elevator.pidCommand(30));
+    SmartDashboard.putNumber("Elevator test setpoint", 0);
+    m_driverController.povRight().whileTrue(m_elevator.pidCommand(20));
+    m_driverController.povLeft().whileTrue(m_elevator.pidCommand(40));
+    //m_driverController.povLeft().onTrue(m_arm.setArmStraightDownVertical());
+    //m_driverController.povRight().onTrue(m_arm.setArmStraightUpVertical());
   }
+
+
+
+  
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

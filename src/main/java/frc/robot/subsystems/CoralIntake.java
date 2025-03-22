@@ -38,10 +38,10 @@ public class CoralIntake extends SubsystemBase {
         m_rightIntakeMotorConfig
                 .inverted(true)
                 .idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(20);
+                .smartCurrentLimit(25);
         m_leftIntakeMotorConfig
                 .idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(20);
+                .smartCurrentLimit(25);
 
         m_leftIntakeMotor.configure(m_leftIntakeMotorConfig, ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
