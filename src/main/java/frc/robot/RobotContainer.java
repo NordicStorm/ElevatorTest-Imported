@@ -149,14 +149,14 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
-    //m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.3));
-    //m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.3));
+    m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.25));
+    m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.25));
     //m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.25)); //Intake
     //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); //Outake
     m_driverController.povUp().onTrue(m_wrist.setWristHorizontal()); 
     m_driverController.povDown().onTrue(m_wrist.setWristVertical());
-    m_driverController.rightTrigger().whileTrue(m_elevator.pidCommand(10));
-    m_driverController.leftTrigger().whileTrue(m_elevator.pidCommand(30));
+    //m_driverController.rightTrigger().whileTrue(m_elevator.pidCommand(10));
+    //m_driverController.leftTrigger().whileTrue(m_elevator.pidCommand(30));
     SmartDashboard.putNumber("Elevator test setpoint", 0);
     m_driverController.povRight().whileTrue(m_elevator.pidCommand(20));
     m_driverController.povLeft().whileTrue(m_elevator.pidCommand(40));
