@@ -8,8 +8,10 @@ import java.lang.Math;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.Autos;
+import frc.robot.commands.MoveUpperSubsystems;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Elevator;
+import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralIntake;
@@ -23,6 +25,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -51,8 +54,8 @@ public class RobotContainer {
   private final Wrist m_wrist = new Wrist();
   private final CoralIntake m_CoralIntake = new CoralIntake();
   private final Climber m_climber = new Climber();
+  private final Vision m_vision = new Vision();
   
-
   // Replace with CommandPS4Controller or Commandm_driverController if needed
   private final CommandXboxController m_driverController = new CommandXboxController(
       OperatorConstants.kDriverControllerPort);
@@ -61,7 +64,7 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
 
-  private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .25; // TODO we changed value
+  private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) *.25; // TODO we changed value
                                                                                       // kSpeedAt12Volts desired top
                                                                                       // speed
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max
@@ -76,10 +79,11 @@ public class RobotContainer {
 
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
-  public final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
+  public static final CommandSwerveDrivetrain drivetrain = TunerConstants.createDrivetrain();
 
   public RobotContainer() {
     SignalLogger.setPath("/media/sda1/ctre-logs/");
+    SignalLogger.start();
     configureBindings();
   }
 
@@ -108,28 +112,27 @@ public class RobotContainer {
     //m_driverController B = dynamic forward
     //m_driverController X = dyanmic reverse
     
-    m_driverController.y().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    m_driverController.a().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+    //m_driverController.y().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+    //m_driverController.a().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     m_driverController.b().whileTrue(m_elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
     m_driverController.x().whileTrue(m_elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     SmartDashboard.putNumber("Arm test setpoint", 0);
     //m_driverController.leftTrigger().whileTrue(m_elevator.armAngleCommand(()->
     //SmartDashboard.getNumber("Arm test setpoint", 0)));
 
-    m_driverController.back().whileTrue(m_elevator.homeCommand());
     //m_driverController.povUp().whileTrue(m_elevator.openLoopCommand(2));
     //m_driverController.povDown().whileTrue(m_elevator.openLoopCommand(-2));
    
 
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(() -> drive.withVelocityX(-m_driverController.getLeftY() * MaxSpeed) // Drive forward
+        drivetrain.applyRequest(() -> drive.withVelocityX(MaxSpeed * -m_driverController.getLeftY()) // Drive forward
                                                                                                      // with negative Y
                                                                                                      // (forward)
             .withVelocityY(-m_driverController.getLeftX() * MaxSpeed) // Drive left with negative X (left)
             .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with
                                                                                   // negative X (left)
-        ));
+                                                                                  ));
 
     //m_driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
     //m_driverController.b().whileTrue(drivetrain
@@ -149,19 +152,21 @@ public class RobotContainer {
     drivetrain.registerTelemetry(logger::telemeterize);
 
 
-    m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.25));
-    m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.25));
-    //m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.25)); //Intake
-    //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); //Outake
+    //m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.25));
+   // m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.25));
+    m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.5)); //Intake
+    m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); //Outake
     m_driverController.povUp().onTrue(m_wrist.setWristHorizontal()); 
     m_driverController.povDown().onTrue(m_wrist.setWristVertical());
     //m_driverController.rightTrigger().whileTrue(m_elevator.pidCommand(10));
     //m_driverController.leftTrigger().whileTrue(m_elevator.pidCommand(30));
-    SmartDashboard.putNumber("Elevator test setpoint", 0);
     m_driverController.povRight().whileTrue(m_elevator.pidCommand(20));
-    m_driverController.povLeft().whileTrue(m_elevator.pidCommand(40));
+    //m_driverController.povLeft().whileTrue(m_elevator.pidCommand(40));
     //m_driverController.povLeft().onTrue(m_arm.setArmStraightDownVertical());
     //m_driverController.povRight().onTrue(m_arm.setArmStraightUpVertical());
+    //m_driverController.rightTrigger().onTrue(new MoveUpperSubsystems(Constants.Position.L3, m_arm, m_elevator, m_wrist));
+    //m_driverController.leftTrigger().onTrue(new MoveUpperSubsystems(Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
+    //m_driverController.povLeft().whileTrue(drivetrain.applyRequest(()->drive.withDriveRequestType(DriveRequestType.Velocity).withVelocityX(4.5)));
   }
 
 
@@ -175,6 +180,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return null;
+    return new Autos(drivetrain);
   }
 }

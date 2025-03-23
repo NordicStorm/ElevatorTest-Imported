@@ -25,15 +25,51 @@ public final class Constants {
     public static final int kRetractLimitSwitchChannel = 9;
     public static final int kClimberID = 23;
     public static final double kRotationToInches = .418; //1.0/20.0 * ((68.8/25.4)/2) * Math.PI * 2.0;//TODO: Find the correct value
-    public static final double kWristVerticalPos = 0.210937;
+    public static final double kWristVerticalPos = 0.214;
     public static final double kWristHorizontalPos = -0.039063;
   }
 
   public static class ArmConstants {
     public static final double kArmStraightUp = 0.4934-.25; //TODO make Cam finish the constants
-    public static final double kArmStraightOut = .24878-.25;
-    public static final double kArmStraightDown = 0-.25;
+    public static final double kArmStraightOut = 0;
+    public static final double kArmStraightDown = -.265;
   }
+
+  public static class ElevatorConstants {
+    public static final double kBottom = 0; 
+    public static final double kTopOfFirstStage = 0;//TODO
+    public static final double kTop = 0;  //TODO
+  }
+
+  public enum Position {
+    ELEVATOR_ZERO(0,MechanismConstants.kWristHorizontalPos,0,0),
+
+    GROUND_INTAKE(-.075, MechanismConstants.kWristHorizontalPos, 0, 1),
+
+    INTERNAL_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 9, 1),
+
+    HOPPER_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 3, 1),
+    
+    L1(-.07, .185, 12, 1),
+
+    L2(.16, MechanismConstants.kWristHorizontalPos, .16, 1),
+
+    L3(.16, MechanismConstants.kWristHorizontalPos, .16, 1),
+
+    L4(.03, MechanismConstants.kWristHorizontalPos, 0, 1);
+
+    public final double armAngle;
+    public final double wristPos;
+    public final double elevatorPos;
+    public final double dist;
+
+    Position(double armAngle, double wristPos, double elevatorPos, double dist) {
+        this.armAngle = armAngle;
+        this.wristPos = wristPos;
+        this.elevatorPos = elevatorPos;
+        this.dist = dist;
+    }
+}
 
 
 }

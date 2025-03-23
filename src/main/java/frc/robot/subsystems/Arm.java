@@ -33,25 +33,17 @@ public class Arm extends SubsystemBase {
         kStop, kOpenLoop, kPID
     }
 
-    public enum Position {
-        HOPPER_INTAKE(1, 2, 3, 1),
-        GROUND_INTAKE(4, 5, 6, 1),
-        STATION_INTAKE(7, 8, 9, 1),
-        L1(10, 11, 12, 1),
-        L2(13, 14, 15, 1),
-        L3(16, 17, 18, 1),
-        L4(19, 20, 21, 1);
+    public enum GeneralArmPosition{
+        blockingVertical(3), 
+        clearOfBottom(2), 
+        blockingDown(1),
+        straightDown(0);
 
-        public final double armAngle;
-        public final double wristPos;
-        public final double elevatorPos;
-        public final double dist;
 
-        Position(double armAngle, double wristPos, double elevatorPos, double dist) {
-            this.armAngle = armAngle;
-            this.wristPos = wristPos;
-            this.elevatorPos = elevatorPos;
-            this.dist = dist;
+        public final int value;
+        
+        GeneralArmPosition(int angle){
+            this.value = angle;
         }
     }
 
@@ -63,12 +55,10 @@ public class Arm extends SubsystemBase {
     private final TalonFX m_motor = new TalonFX(MechanismConstants.kArmID, "rio");
     private final MotionMagicExpoVoltage m_voltage = new MotionMagicExpoVoltage(0);
 
-
-
     // TODO find CAN id
     public final CANdi m_candi = new CANdi(0, "rio");
     public final CANdiConfiguration configs_CANdi = new CANdiConfiguration();
-    
+
     //
     // State
     //
@@ -76,11 +66,10 @@ public class Arm extends SubsystemBase {
     private ControlMode m_controlMode = ControlMode.kStop;
     private double demandVoltage;
     private double m_desiredState;
-    
 
     public Arm() {
         m_motorConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANdiPWM1;
-        //TODO find CAN ID m_motorConfig.Feedback.FeedbackRemoteSensorID();
+        // TODO find CAN ID m_motorConfig.Feedback.FeedbackRemoteSensorID();
 
         m_motorConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
         m_motorConfig.Slot0.kG = 0.325; // TODO: Add 0.25 V output to overcome static friction
@@ -100,8 +89,7 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot1.kI = 0; // TODO: no output for integrated error
         m_motorConfig.Slot1.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
 
-        
-        m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+        m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 60; // Rotations Per second
         m_motorConfig.MotionMagic.MotionMagicAcceleration = 10;
         // velocity
@@ -112,22 +100,12 @@ public class Arm extends SubsystemBase {
 
         m_motor.getConfigurator().apply(m_motorConfig);
 
-        SmartDashboard.putNumber("Arm kP", m_motorConfig.Slot0.kP);
-        SmartDashboard.putNumber("Arm kI", m_motorConfig.Slot0.kI);
-        SmartDashboard.putNumber("Arm kD", m_motorConfig.Slot0.kD);
-        SmartDashboard.putNumber("Arm kS", m_motorConfig.Slot0.kS);
-        SmartDashboard.putNumber("Arm kV", m_motorConfig.Slot0.kV);
-        SmartDashboard.putNumber("Arm kA", m_motorConfig.Slot0.kA);
-        SmartDashboard.putNumber("Arm mmCV", m_motorConfig.MotionMagic.MotionMagicCruiseVelocity);
-        SmartDashboard.putNumber("Arm mmkV", m_motorConfig.MotionMagic.MotionMagicExpo_kV);
-        SmartDashboard.putNumber("Arm mmkA", m_motorConfig.MotionMagic.MotionMagicExpo_kA);
-
         // TODO encoder and arm angle
         configs_CANdi.DigitalInputs.S2CloseState = S2CloseStateValue.CloseWhenLow;
         configs_CANdi.DigitalInputs.S2FloatState = S2FloatStateValue.PullHigh;
-        //configs_CANdi.PWM2.AbsoluteSensorDiscontinuityPoint = 0.5;
+        // configs_CANdi.PWM2.AbsoluteSensorDiscontinuityPoint = 0.5;
         configs_CANdi.PWM1.SensorDirection = false;
-        configs_CANdi.PWM1.AbsoluteSensorOffset = 0.899688-.25;
+        configs_CANdi.PWM1.AbsoluteSensorOffset = 0.899688 - .25;
 
         m_candi.getConfigurator().apply(configs_CANdi);
         m_candi.getS1Closed().setUpdateFrequency(100);
@@ -149,30 +127,32 @@ public class Arm extends SubsystemBase {
         // - Any control related settings for PID, Motion Magic, Remote Sensors, etc..
         //
 
-        //m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        //m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 135;
-        //m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        //m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = .25;
-
-        // PID Slot 0
-        //
-        // TODO may to convert gains from Recalc to something in rotations
-        // https://www.reca.lc/linear?angle=%7B%22s%22%3A103.582964%2C%22u%22%3A%22deg%22%7D&currentLimit=%7B%22s%22%3A40%2C%22u%22%3A%22A%22%7D&efficiency=100&limitAcceleration=0&limitDeceleration=0&limitVelocity=0&limitedAcceleration=%7B%22s%22%3A400%2C%22u%22%3A%22in%2Fs2%22%7D&limitedDeceleration=%7B%22s%22%3A50%2C%22u%22%3A%22in%2Fs2%22%7D&limitedVelocity=%7B%22s%22%3A10%2C%22u%22%3A%22in%2Fs%22%7D&load=%7B%22s%22%3A30%2C%22u%22%3A%22lbs%22%7D&motor=%7B%22quantity%22%3A2%2C%22name%22%3A%22Kraken%20X60%20%28FOC%29%2A%22%7D&ratio=%7B%22magnitude%22%3A10%2C%22ratioType%22%3A%22Reduction%22%7D&spoolDiameter=%7B%22s%22%3A1.751%2C%22u%22%3A%22in%22%7D&travelDistance=%7B%22s%22%3A30%2C%22u%22%3A%22in%22%7D
-
-        // We want to read position data from the leader motor
-        m_motor.getPosition().setUpdateFrequency(50);
-        m_motor.getVelocity().setUpdateFrequency(50);
-
-        // These 3 are needed for the follower motor to work
-        m_motor.getDutyCycle().setUpdateFrequency(50);
-        m_motor.getMotorVoltage().setUpdateFrequency(50);
-        m_motor.getTorqueCurrent().setUpdateFrequency(50);
-        m_motor.optimizeBusUtilization();
+        m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+        m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = .26;
+        m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+        m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -.265;
     }
 
     public double getArmAngle() {
         return m_candi.getPWM1Position().getValueAsDouble();
     }
+
+    public GeneralArmPosition getArmGeneralPosition(){
+        if (getArmAngle() > .2){
+            return GeneralArmPosition.blockingVertical;
+        }
+        else if (getArmAngle() > -.1){
+            return GeneralArmPosition.clearOfBottom;
+        }
+        else if (getArmAngle() > -.25){
+            return GeneralArmPosition.blockingDown;
+        }
+        else{
+            return GeneralArmPosition.straightDown;
+        }
+    }
+
+
 
     public void stop() {
         m_controlMode = ControlMode.kStop;
@@ -185,9 +165,13 @@ public class Arm extends SubsystemBase {
         demandVoltage = OutputVoltage;
     }
 
-    private void setArmAngle(double position) {
+    public void setArmAngle(double position) {
         m_controlMode = ControlMode.kPID;
         m_desiredState = position;
+    }
+
+    public boolean isAtSetPoint(){
+        return (Math.abs(m_desiredState - getArmAngle()) < .02);
     }
 
     //
@@ -206,7 +190,6 @@ public class Arm extends SubsystemBase {
         return Commands.runOnce(() -> setArmAngle(Constants.ArmConstants.kArmStraightOut), this);
     }
 
-
     @Override
     public void periodic() {
         // TODO add switch to disable break mode when disabled
@@ -216,7 +199,6 @@ public class Arm extends SubsystemBase {
         SmartDashboard.putNumber("Voltage demand", demandVoltage);
         SmartDashboard.putNumber("Arm Angle", getArmAngle());
 
-
         switch (m_controlMode) {
             case kOpenLoop:
                 // Do openloop stuff here
@@ -224,18 +206,11 @@ public class Arm extends SubsystemBase {
                 break;
             case kPID:
 
-                m_motorConfig.Slot0.kS = SmartDashboard.getNumber("Arm kS", 0);
-                m_motorConfig.Slot0.kG = SmartDashboard.getNumber("Arm kG", 0);
-                m_motorConfig.Slot0.kV = SmartDashboard.getNumber("Arm kV", 0);
-                m_motorConfig.Slot0.kA = SmartDashboard.getNumber("Arm kA", 0);
-                m_motorConfig.Slot0.kP = SmartDashboard.getNumber("Arm kP", 0);
-                m_motorConfig.Slot0.kI = SmartDashboard.getNumber("Arm kI", 0);
-                m_motorConfig.Slot0.kD = SmartDashboard.getNumber("Arm kD", 0);
-
-                m_motor.getConfigurator().apply(m_motorConfig);
-
-                m_motor.setControl(m_voltage.withPosition(m_desiredState));
-
+                if (getArmAngle() > m_desiredState + .025) {
+                    m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(1));
+                } else {
+                    m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(0));
+                }
                 break;
             case kStop:
                 // Fall through to default
