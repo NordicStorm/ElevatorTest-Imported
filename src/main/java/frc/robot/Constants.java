@@ -22,7 +22,7 @@ public final class Constants {
     public static final int kWristID = 1;
     public static final int kElevatorMotorID = 8;
     public static final int kElevatorMotorFollowerID = 9;
-    public static final int kRetractLimitSwitchChannel = 9;
+    public static final int kRetractLimitSwitchChannel = 0;
     public static final int kClimberID = 23;
     public static final double kRotationToInches = .418; //1.0/20.0 * ((68.8/25.4)/2) * Math.PI * 2.0;//TODO: Find the correct value
     public static final double kWristVerticalPos = 0.214;
@@ -42,21 +42,21 @@ public final class Constants {
   }
 
   public enum Position {
-    ELEVATOR_ZERO(0,MechanismConstants.kWristHorizontalPos,0,0),
+    ELEVATOR_ZERO(.17,MechanismConstants.kWristHorizontalPos,0,0),
 
-    GROUND_INTAKE(-.075, MechanismConstants.kWristHorizontalPos, 0, 1),
+    GROUND_INTAKE(-.084, MechanismConstants.kWristHorizontalPos, 2, 1),
 
-    INTERNAL_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 9, 1),
+    INTERNAL_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 14.0, 1),
 
-    HOPPER_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 3, 1),
+    HOPPER_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 18.0, 1),
     
-    L1(-.07, .185, 12, 1),
+    L1(-.0539, MechanismConstants.kWristVerticalPos, 11.6, .515), // 305 = none, 190=resting, 
 
-    L2(.16, MechanismConstants.kWristHorizontalPos, .16, 1),
+    L2(.132, MechanismConstants.kWristHorizontalPos, 2.5, .325), //.486
 
-    L3(.16, MechanismConstants.kWristHorizontalPos, .16, 1),
+    L3(.132, MechanismConstants.kWristHorizontalPos, 19.0, .3), //.3 away when coral is on the reef
 
-    L4(.03, MechanismConstants.kWristHorizontalPos, 0, 1);
+    L4(.1, MechanismConstants.kWristHorizontalPos, 46, .45);
 
     public final double armAngle;
     public final double wristPos;
@@ -70,6 +70,4 @@ public final class Constants {
         this.dist = dist;
     }
 }
-
-
 }

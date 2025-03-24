@@ -15,15 +15,18 @@ public class Vision extends SubsystemBase {
 
         // Get the pose estimate
         LimelightHelpers.PoseEstimate limelightMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
-
         // Add it to your pose estimator
-        if (limelightMeasurement.tagCount >= 1){
-            RobotContainer.drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.5, .5, 9999999));
+        if (limelightMeasurement.tagCount >= 1) {
+            RobotContainer.drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.9, .9, 9999999));
             RobotContainer.drivetrain.addVisionMeasurement(
                     limelightMeasurement.pose,
                     limelightMeasurement.timestampSeconds);
         }
-        
+
+    }
+
+    public int seenTagID() {
+        return (int) LimelightHelpers.getFiducialID("");
     }
 
 }

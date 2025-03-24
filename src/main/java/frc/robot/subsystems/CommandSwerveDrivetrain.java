@@ -46,7 +46,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final CANrange m_backCANrange = new CANrange(0, "CANivore");
     public Field2d m_fieldDisplay = new Field2d();
 
-    private DriveTrainConfig m_driveTrainConfig;
+    private DriveTrainConfig m_driveTrainConfig = new DriveTrainConfig();
     private final SwerveRequest.RobotCentric m_drive = new SwerveRequest.RobotCentric()
             .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.Velocity);
@@ -294,6 +294,22 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                 m_hasAppliedOperatorPerspective = true;
             });
         }
+    }
+
+    public double getFrontRange(){
+        return m_frontCANrange.getDistance().getValueAsDouble();
+    }
+
+    public double getBackRange(){
+        return m_backCANrange.getDistance().getValueAsDouble();
+    }
+
+    public boolean getFrontRangeIsDetected(){
+        return m_frontCANrange.getIsDetected().getValue();
+    }
+
+    public boolean getBackRangeIsDetected(){
+        return m_backCANrange.getIsDetected().getValue();
     }
 
     private void startSimThread() {

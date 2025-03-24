@@ -13,11 +13,19 @@ import frc.robot.subsystems.CommandSwerveDrivetrain;
 
 public final class Autos extends SequentialCommandGroup{
 
+  private CommandSwerveDrivetrain m_drivetrain;
+
   public Autos(CommandSwerveDrivetrain drivetrain) {
+    m_drivetrain = drivetrain;
+    initializeCommands();
+  }
+
+  public void initializeCommands(){ 
+// !PATHWEAVER_INFO: {"trackWidth":0.962025,"gameName":"Reefscape"}
     MultiPartPath pathA;
-    pathA = new MultiPartPath(drivetrain);
-    pathA.resetPosition(5, 5);
-    pathA.addWaypoint(6, 6);
+    pathA = new MultiPartPath(m_drivetrain);
+    pathA.resetPosition(8.567, 5.938);
+    pathA.addWaypoint(6.000, 6.000);
     pathA.addStop();
 
     addCommands(pathA.finalizePath());

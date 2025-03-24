@@ -38,7 +38,7 @@ public class Elevator extends SubsystemBase {
     private final TalonFXConfiguration m_motorConfig = new TalonFXConfiguration();
     private final TalonFX m_motor = new TalonFX(MechanismConstants.kElevatorMotorID, TunerConstants.kCANBus);
     private final TalonFX m_motorFollower = new TalonFX(MechanismConstants.kElevatorMotorFollowerID, TunerConstants.kCANBus);
-    private final DigitalInput m_retractLimit = new DigitalInput(MechanismConstants.kRetractLimitSwitchChannel);;
+    private final DigitalInput m_retractLimit = new DigitalInput(MechanismConstants.kRetractLimitSwitchChannel);;;;;;;;;;;;;;;
    
     //
     // State
@@ -111,10 +111,10 @@ public class Elevator extends SubsystemBase {
         //   it may stop moving if their built in encoders are not in sync.
         //
         m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-        m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 108;
+        m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 113.5;
         m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
         m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
-
+        m_motor.getConfigurator().apply(m_motorConfig);
         
         // We want to read position data from the leader motor
         m_motor.getPosition().setUpdateFrequency(50);
@@ -129,6 +129,10 @@ public class Elevator extends SubsystemBase {
 
     public boolean isAtRetractLimit() {
         return !m_retractLimit.get();
+    }
+
+    public boolean isAtGrabHeight(){
+        return (getHeight() > 17 && getHeight() < 19);
     }
 
     public double getHeight() {
@@ -212,6 +216,9 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putNumber("Mechanism height", getHeight());
         SmartDashboard.putNumber("Mechanism rotations", m_motor.getPosition().getValueAsDouble());
 
+        if (isAtRetractLimit()){
+            m_motor.setPosition(0);
+        }
 
         switch (m_controlMode) {
             case kOpenLoop:

@@ -76,7 +76,7 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot0.kS = .18;
         m_motorConfig.Slot0.kV = .12; // TODO: A velocity target of 1 rps results in 0.12 V output
         m_motorConfig.Slot0.kA = 10; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        m_motorConfig.Slot0.kP = 37; // TODO: A position error of 2.5 rotations results in 12 V output
+        m_motorConfig.Slot0.kP = 44; // TODO: A position error of 2.5 rotations results in 12 V output
         m_motorConfig.Slot0.kI = 0; // TODO: no output for integrated error
         m_motorConfig.Slot0.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
 
@@ -85,7 +85,7 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot1.kS = .18;
         m_motorConfig.Slot1.kV = .1; // TODO: A velocity target of 1 rps results in 0.12 V output
         m_motorConfig.Slot1.kA = 10; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        m_motorConfig.Slot1.kP = 20; // TODO: A position error of 2.5 rotations results in 12 V output
+        m_motorConfig.Slot1.kP = 25; // TODO: A position error of 2.5 rotations results in 12 V output
         m_motorConfig.Slot1.kI = 0; // TODO: no output for integrated error
         m_motorConfig.Slot1.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
 
@@ -199,6 +199,7 @@ public class Arm extends SubsystemBase {
         SmartDashboard.putNumber("Voltage demand", demandVoltage);
         SmartDashboard.putNumber("Arm Angle", getArmAngle());
 
+
         switch (m_controlMode) {
             case kOpenLoop:
                 // Do openloop stuff here
@@ -208,8 +209,10 @@ public class Arm extends SubsystemBase {
 
                 if (getArmAngle() > m_desiredState + .025) {
                     m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(1));
+                    SmartDashboard.putBoolean("Is arm using slot 1?", true);
                 } else {
                     m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(0));
+                    SmartDashboard.putBoolean("Is arm using slot 1?", false);
                 }
                 break;
             case kStop:
