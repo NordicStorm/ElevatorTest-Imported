@@ -1,6 +1,7 @@
 package frc.robot.commands.paths;
+import edu.wpi.first.wpilibj2.command.Command;
 
-public class HeadingSetPiece extends CommandPathPiece{
+public class HeadingSetPiece extends Command implements CommandPathPiece{
     MultiPartPath path;
     double offset = 0; // if it does not follow trajectory, this is just the absolute angle
     boolean followTrajectory = false;

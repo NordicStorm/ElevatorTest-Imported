@@ -15,6 +15,7 @@ public class Vision extends SubsystemBase {
 
         // Get the pose estimate
         LimelightHelpers.PoseEstimate limelightMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue("");
+        if(limelightMeasurement == null) return;
         // Add it to your pose estimator
         if (limelightMeasurement.tagCount >= 1) {
             RobotContainer.drivetrain.setVisionMeasurementStdDevs(VecBuilder.fill(.9, .9, 9999999));
@@ -26,7 +27,12 @@ public class Vision extends SubsystemBase {
     }
 
     public int seenTagID() {
-        return (int) LimelightHelpers.getFiducialID("");
+        return Math.max(0, (int) LimelightHelpers.getFiducialID(""));
     }
+
+    public double getXOffset(){
+        return LimelightHelpers.getTX("");
+    }
+
 
 }

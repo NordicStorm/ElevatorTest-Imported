@@ -12,7 +12,7 @@ import frc.robot.subsystems.Wrist;
 public class InternalIntake extends SequentialCommandGroup{
     
     public InternalIntake(Arm arm, Elevator elevator, Wrist wrist, CoralIntake intake){
-        addCommands(new MoveUpperSubsystems(Position.HOPPER_INTAKE, arm, elevator, wrist));
+        addCommands(new MoveUpperSubsystems(() -> Position.HOPPER_INTAKE, arm, elevator, wrist));
         addCommands(new Command(){
             @Override
             public void initialize() {

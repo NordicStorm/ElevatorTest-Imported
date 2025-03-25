@@ -1,8 +1,9 @@
 package frc.robot.commands.paths;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj2.command.Command;
 
-public class ResetPosePiece extends CommandPathPiece{
+public class ResetPosePiece extends Command implements CommandPathPiece{
     MultiPartPath path;
     Pose2d pose;
     public ResetPosePiece(MultiPartPath path, Pose2d pose){

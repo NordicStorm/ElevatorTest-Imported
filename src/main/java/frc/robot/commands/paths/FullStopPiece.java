@@ -1,8 +1,9 @@
 package frc.robot.commands.paths;
 
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj2.command.Command;
 
-public class FullStopPiece extends CommandPathPiece {
+public class FullStopPiece extends Command implements CommandPathPiece {
     MultiPartPath path;
     long endTime = 0;
     long waitTime;

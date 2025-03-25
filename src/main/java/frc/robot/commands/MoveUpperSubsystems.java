@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Constants.Position;
@@ -9,13 +11,13 @@ import frc.robot.subsystems.Wrist;
 
 public class MoveUpperSubsystems extends Command {
 
-    private Position m_position;
+    private Supplier<Position> m_positionSupplier;
     private Arm m_arm;
     private Elevator m_elevator;
     private Wrist m_wrist;
 
-    public MoveUpperSubsystems(Position position, Arm arm, Elevator elevator, Wrist wrist) {
-        this.m_position = position;
+    public MoveUpperSubsystems(Supplier<Position> position, Arm arm, Elevator elevator, Wrist wrist) {
+        this.m_positionSupplier = position;
         this.m_elevator = elevator;
         this.m_arm = arm;
         this.m_wrist = wrist;
@@ -29,10 +31,11 @@ public class MoveUpperSubsystems extends Command {
 
     @Override
     public void execute() {
-        var constrained = getConstrainedTargetHeight(m_position);
+        var currentTarget = m_positionSupplier.get();
+        var constrained = getConstrainedTargetHeight(currentTarget);
         m_elevator.setPID(constrained.elevatorPos);
-        m_arm.setArmAngle(m_position.armAngle);
-        m_wrist.setWristTarget(m_position.wristPos);
+        m_arm.setArmAngle(getConstrainedTargetAngle(currentTarget.armAngle));
+        m_wrist.setWristTarget(currentTarget.wristPos);
     }
 
     @Override
@@ -60,6 +63,13 @@ public class MoveUpperSubsystems extends Command {
             return Position.ELEVATOR_ZERO;
         }
         return position;
+    }
+
+    private double getConstrainedTargetAngle(double targetAngle){
+        if (m_elevator.getHeight() < Constants.Position.L1.elevatorPos - 0.5 && m_arm.getArmAngle() < 0){
+            return 0;
+        }
+        return targetAngle;
     }
 
 }

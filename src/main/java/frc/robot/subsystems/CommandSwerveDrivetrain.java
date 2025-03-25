@@ -279,6 +279,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("Voltage", getModule(3).getDriveMotor().getMotorVoltage().getValueAsDouble());
         SmartDashboard.putNumber("Vx", getState().Speeds.vxMetersPerSecond);
         SmartDashboard.putNumber("vY", getState().Speeds.vyMetersPerSecond);
+        SmartDashboard.putNumber("Gyro", getGyroDegrees());
 
         SmartDashboard.putNumber("Front CAN range", m_frontCANrange.getDistance().getValueAsDouble());
         SmartDashboard.putNumber("Back CAN range", m_backCANrange.getDistance().getValueAsDouble());
@@ -297,7 +298,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public double getFrontRange(){
-        return m_frontCANrange.getDistance().getValueAsDouble();
+        return m_frontCANrange.getDistance().getValueAsDouble() - 0.238;
     }
 
     public double getBackRange(){
@@ -370,12 +371,12 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public double getGyroDegrees() {
-        return Math.toDegrees(getRotation3d().getZ());
+        return Math.toDegrees(getGyroRadians());
     }
 
     @Override
     public double getGyroRadians() {
-        return getRotation3d().getZ();
+        return getState().Pose.getRotation().getRadians();
 
     }
 

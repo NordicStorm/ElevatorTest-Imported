@@ -2,6 +2,7 @@ package frc.robot.commands.paths;
 
 import java.util.ArrayList;
 import java.util.List;
+import edu.wpi.first.wpilibj2.command.Command;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -281,12 +282,12 @@ public class MultiPartPath {
                         waypoints.clear();
                         System.out.println("Taj make");
                     }
-                    actualCommands.add(commandPiece);
+                    actualCommands.add((Command)commandPiece);
                 } else {
                     if(waypoints.size() > 0){
                         waypoints.get(waypoints.size() - 1).addParallelCommand(commandPiece); // add to the most recent waypoint
                     } else {
-                        actualCommands.add(new ScheduleCommand(commandPiece));
+                        actualCommands.add(new ScheduleCommand((Command) commandPiece));
                     }
                 }
             }
@@ -295,7 +296,6 @@ public class MultiPartPath {
         for (Command command : actualCommands) {
             group.addCommands(command);
         }
-        group.addRequirements((Subsystem) drivetrain);
         return group;
     }
 

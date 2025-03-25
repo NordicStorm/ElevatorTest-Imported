@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
  * class shouldn't normally be used by the user, please make your command
  * implement CommandPathPiece instead.
  */
-public class PathPieceWrapper extends CommandPathPiece {
+public class PathPieceWrapper extends Command implements CommandPathPiece {
 
     private double startSpeed;
     private Command command;

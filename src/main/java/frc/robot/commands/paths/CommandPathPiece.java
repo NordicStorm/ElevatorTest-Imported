@@ -1,20 +1,18 @@
 package frc.robot.commands.paths;
 
-import edu.wpi.first.wpilibj2.command.*;
-
-public class CommandPathPiece extends Command implements PathPiece {
+public interface CommandPathPiece extends PathPiece {
 
     /**
      * Is used only needed if interruptsTrajectory is true.
      * 
      * @return the requested speed in meters per second
      */
-    public double getRequestedStartSpeed() {
+    public default double getRequestedStartSpeed() {
         return 0;
     }
 
     @Override
-    public PieceType getPieceType() {
+    public default PieceType getPieceType() {
         return PieceType.Command;
     }
 

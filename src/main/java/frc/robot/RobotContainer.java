@@ -7,6 +7,7 @@ package frc.robot;
 import java.lang.Math;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.AutoScoreSequence;
 import frc.robot.commands.Autos;
 import frc.robot.commands.InternalIntake;
 import frc.robot.commands.MoveUpperSubsystems;
@@ -57,8 +58,8 @@ public class RobotContainer {
   private final Climber m_climber = new Climber();
   private final Vision m_vision = new Vision();
 
-  public static boolean alignmentRight; // True is right, False is left
-  public static Constants.Position targetLevel;
+  public static boolean alignmentRight = true; // True is right, False is left
+  public static Constants.Position targetLevel = Constants.Position.L3;
   public static int rakeAlgae; // 0 is none, 1 is low algae, 2 is high algae
 
   // Replace with CommandPS4Controller or Commandm_driverController if needed
@@ -120,7 +121,7 @@ public class RobotContainer {
     // m_driverController.a().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     m_driverController.b().whileTrue(m_elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
     m_driverController.x().whileTrue(m_elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    m_driverController.start().whileTrue(new MoveUpperSubsystems(Constants.Position.ELEVATOR_ZERO, m_arm, m_elevator, m_wrist));
+    m_driverController.start().onTrue(new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, m_arm, m_elevator, m_wrist));
     SmartDashboard.putNumber("Arm test setpoint", 0);
     // m_driverController.leftTrigger().whileTrue(m_elevator.armAngleCommand(()->
     // SmartDashboard.getNumber("Arm test setpoint", 0)));
@@ -150,7 +151,7 @@ public class RobotContainer {
     m_driverController.start().and(m_driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
 
     // reset the field-centric heading on left bumper press
-    m_driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldCentric()));
+    m_driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.resetRotation(Rotation2d.kZero)));
 
     drivetrain.registerTelemetry(logger::telemeterize);
 
@@ -166,13 +167,14 @@ public class RobotContainer {
     //m_driverController.povDown().onTrue(m_wrist.setWristVertical());
                
     // m_driverController.povLeft().whileTrue(drivetrain.applyRequest(()->drive.withDriveRequestType(DriveRequestType.Velocity).withVelocityX(4.5)));
-    m_driverController.povDown().whileTrue(new MoveUpperSubsystems(Constants.Position.L1, m_arm, m_elevator, m_wrist));
-    m_driverController.povLeft().whileTrue(new MoveUpperSubsystems(Constants.Position.L2, m_arm, m_elevator, m_wrist));
-    m_driverController.povUp().whileTrue(new MoveUpperSubsystems(Constants.Position.L3, m_arm, m_elevator, m_wrist));
-    m_driverController.povRight().whileTrue(new MoveUpperSubsystems(Constants.Position.L4, m_arm, m_elevator, m_wrist));
+    m_driverController.povDown().onTrue(new MoveUpperSubsystems(() ->Constants.Position.L1, m_arm, m_elevator, m_wrist));
+    m_driverController.povLeft().onTrue(new MoveUpperSubsystems(() ->Constants.Position.L2, m_arm, m_elevator, m_wrist));
+    m_driverController.povUp().onTrue(new MoveUpperSubsystems(() ->Constants.Position.L3, m_arm, m_elevator, m_wrist));
+    m_driverController.povRight().onTrue(new MoveUpperSubsystems(() -> Constants.Position.L4, m_arm, m_elevator, m_wrist));
   
-    
-    m_driverController.y().whileTrue(new MoveUpperSubsystems(Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
+
+    m_driverController.y().whileTrue(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
+    m_driverController.back().whileTrue(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision));
   } 
 
   /**
@@ -182,6 +184,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return new Autos(drivetrain);
+    return new Autos(drivetrain, m_wrist, m_arm, m_elevator, m_vision, m_CoralIntake);
   }
 }

@@ -16,9 +16,11 @@ import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.wpilibj2.command.Command;
 
-public class TrajectoryFollowPiece extends CommandPathPiece {
+public class TrajectoryFollowPiece extends Command implements CommandPathPiece {
 
     private List<Pair<Double, Command>> commandTriggerTimes = new ArrayList<>();
     private boolean done = false;
@@ -46,6 +48,7 @@ public class TrajectoryFollowPiece extends CommandPathPiece {
         this.endVelocity = endVelocity;
         this.path = path;
         this.drivetrainConfig = path.getDrivetrainConfig();
+        addRequirements((Subsystem) drivetrain);
     }
 
     @Override
@@ -122,7 +125,7 @@ public class TrajectoryFollowPiece extends CommandPathPiece {
             if (waypoints.get(i).parallelCommands.size() > 0) {
                 SequentialCommandGroup group = new SequentialCommandGroup();
                 for (CommandPathPiece command : waypoints.get(i).parallelCommands) {
-                    group.addCommands(command);
+                    group.addCommands((Command) command);
                 }
                 commandTriggerTimes
                         .add(new Pair<>(Double.valueOf(states.get(j).timeSeconds), group));

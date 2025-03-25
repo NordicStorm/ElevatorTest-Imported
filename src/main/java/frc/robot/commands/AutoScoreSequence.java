@@ -2,15 +2,19 @@ package frc.robot.commands;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.commands.paths.CommandPathPiece;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralIntake;
@@ -23,7 +27,7 @@ import static java.util.Map.entry;
 
 import java.io.IOException;
 
-public class AutoScoreSequence extends SequentialCommandGroup {
+public class AutoScoreSequence extends SequentialCommandGroup implements CommandPathPiece {
     Map<Integer, Double> angleMap = Map.ofEntries(
             entry(17, 60.0),
             entry(18, 0.0),
@@ -38,10 +42,20 @@ public class AutoScoreSequence extends SequentialCommandGroup {
             entry(9, -60.0),
             entry(10, 0.0),
             entry(11, 60.0));
-    private boolean invalidTag = false;
-    private ProfiledPIDController rotationPID = new ProfiledPIDController(2, 0, 0, new Constraints(9, 2));
-    private ProfiledPIDController xPID = new ProfiledPIDController(2, 0, 0, new Constraints(4, 2));
-    private ProfiledPIDController yPID = new ProfiledPIDController(2, 0, 0, new Constraints(4, 2));
+    private boolean invalidTag;
+    private int targetTagID;
+
+    private ProfiledPIDController rotationPID;
+    private ProfiledPIDController xPID;
+    private ProfiledPIDController yPID;
+    private SimpleMotorFeedforward motorFF;
+
+    private double xDistance = 999;
+    private double yError = 999;
+    private double yOffset;
+
+    private boolean isFirstTime;
+    private Constants.Position level;
 
     public static AprilTagFieldLayout fieldLayout;
 
@@ -60,55 +74,256 @@ public class AutoScoreSequence extends SequentialCommandGroup {
         // the neutral intake position
         addRequirements(arm, elevator, wrist, intake, drivetrain);
         addCommands(new Command() {
+            private boolean done = false;
+
             @Override
             public void initialize() {
+                targetTagID = 0;
+                done = false;
+                xDistance = 999;
+                yError = 999;
+                rotationPID = new ProfiledPIDController(10, 0, 0, new Constraints(400, 300));
+                xPID = new ProfiledPIDController(3, 0, 0, new Constraints(4, 2));
+                yPID = new ProfiledPIDController(4, 0, 0, new Constraints(4, 2));
+                rotationPID.enableContinuousInput(-180, 180);
+                rotationPID.reset(drivetrain.getGyroDegrees());
+                isFirstTime = true;
+                yOffset = 0;
+                level = RobotContainer.targetLevel;
             }
 
             @Override
             public void execute() {
                 int seenTagID = vision.seenTagID();
-                if (!angleMap.containsKey(seenTagID)) {
-                    invalidTag = true;
+                if (targetTagID == 0 && !angleMap.containsKey(seenTagID)) {
+                    AutoScoreSequence.this.cancel();
                     return;
+                } else if (seenTagID != 0 && angleMap.containsKey(seenTagID)) {
+                    targetTagID = seenTagID;
                 }
-                double rotation = angleMap.get(seenTagID);
 
-                int targetOffset;
-
-                if (RobotContainer.alignmentRight) {
-                    targetOffset = 10;
-                } else {
-                    targetOffset = -10;
+                doMovement(.8, drivetrain, vision);
+                SmartDashboard.putNumber("xdist", xDistance);
+                SmartDashboard.putNumber("yError", yError);
+                if (xDistance <= 1 && Math.abs(yPID.getPositionError()) < .01) {
+                    done = true;
                 }
-                Pose2d relativePose = drivetrain.getPose().rotateAround(
-                        fieldLayout.getTagPose(seenTagID).get().getTranslation().toTranslation2d(),
-                        Rotation2d.fromDegrees(rotation));
-
-                ChassisSpeeds speeds = new ChassisSpeeds();
-                speeds.vyMetersPerSecond = yPID.calculate(relativePose.getY(), targetOffset);
-
-                double distance;
-
-                if (drivetrain.getFrontRangeIsDetected()) {
-                    distance = drivetrain.getFrontRange();
-                } else {
-                    distance = relativePose.getX();
-                }
-                speeds.vxMetersPerSecond = xPID.calculate(distance, 1);
-
             }
 
             @Override
             public boolean isFinished() {
-                return invalidTag || true;
+                return done;
             }
 
             @Override
             public void end(boolean interrupted) {
-                intake.stop();
-                elevator.setPID(Constants.Position.HOPPER_INTAKE.elevatorPos);
             }
         });
+
+        addCommands(new Command() {
+            private boolean done = false;
+
+            @Override
+            public void initialize() {
+                done = false;
+            }
+
+            @Override
+            public void execute() {
+                doMovement(.4, drivetrain, vision);
+
+                if (xDistance <= .45 && Math.abs(yPID.getPositionError()) < .01) {
+                    done = true;
+                }
+            }
+
+            @Override
+            public boolean isFinished() {
+                return done;
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                drivetrain.drive(new ChassisSpeeds());
+            }
+        }.alongWith(new MoveUpperSubsystems(() -> level, arm, elevator, wrist)));
+
+        addCommands(new Command() {
+
+            @Override
+            public void execute() {
+                doMovement(level.dist, drivetrain, vision);
+            }
+
+            @Override
+            public boolean isFinished() {
+                return Math.abs(xPID.getPositionError()) < .02;
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                drivetrain.drive(new ChassisSpeeds());
+            }
+        });
+
+        addCommands(new Command() {
+
+            long timeToEnd;
+
+            @Override
+            public void initialize() {
+                timeToEnd = 0;
+            }
+
+            @Override
+            public void execute() {
+                if (level == Constants.Position.L1) {
+                    intake.setIntakeVoltage(1);
+                } else if (level == Constants.Position.L2 || level == Constants.Position.L3) {
+                    intake.setIntakeVoltage(.25);
+                    arm.setArmAngle(Constants.ArmConstants.kArmAfterMiddleCoralOutake);
+                } else if (level == Constants.Position.L4) {
+                    arm.setArmAngle(.6);
+                    intake.setIntakeVoltage(.25);
+                }
+                if (arm.isAtSetPoint() && timeToEnd == 0) {
+                    timeToEnd = System.currentTimeMillis() + 100;
+                }
+            }
+
+            @Override
+            public boolean isFinished() {
+                return timeToEnd != 0 && System.currentTimeMillis() >= timeToEnd;
+            }
+
+        });
+
+        addCommands(new Command() {
+
+            @Override
+            public void execute() {
+                drivetrain.drive(new ChassisSpeeds(-1, 0, 0));
+            }
+
+            @Override
+            public boolean isFinished() {
+                if (level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0) {
+                    return drivetrain.getFrontRange() > 0.5;
+                } else {
+                    return drivetrain.getFrontRange() > 1;
+                }
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                drivetrain.drive(new ChassisSpeeds());
+            }
+        });
+        addCommands(new ConditionalCommand((new Command() {
+
+            long timeToEnd;
+
+            @Override
+            public void initialize() {
+                timeToEnd = System.currentTimeMillis() + 500;
+            }
+
+            @Override
+            public void execute() {
+                if (RobotContainer.alignmentRight) {
+                    drivetrain.drive(new ChassisSpeeds(0, 1, 0));
+                } else {
+                    drivetrain.drive(new ChassisSpeeds(0, -1, 0));
+                }
+            }
+
+            @Override
+            public boolean isFinished() {
+                return System.currentTimeMillis() >= timeToEnd;
+            }
+
+        }.alongWith(new MoveUpperSubsystems(() -> RobotContainer.rakeAlgae == 1 ? Constants.Position.BEFORE_LOWER_ALGAE
+                : Constants.Position.BEFORE_UPPER_ALGAE, arm, elevator, wrist))).andThen(new Command() {
+                    @Override
+                    public void execute() {
+                        drivetrain.drive(new ChassisSpeeds(1, 0, 0));
+                    }
+
+                    @Override
+                    public boolean isFinished() {
+                        return drivetrain.getFrontRange() < .1;
+                    }
+
+                })
+                .andThen(new MoveUpperSubsystems(
+                        () -> RobotContainer.rakeAlgae == 1 ? Constants.Position.AFTER_LOWER_ALGAE
+                                : Constants.Position.AFTER_UPPER_ALGAE,
+                        arm, elevator, wrist)
+                        .alongWith(new Command() {
+                            @Override
+                            public void execute() {
+                                drivetrain.drive(new ChassisSpeeds(-1, 0, 0));
+                            }
+
+                            @Override
+                            public boolean isFinished() {
+                                return drivetrain.getFrontRange() > .3;
+                            }
+                        })
+
+                ), new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
+                        .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)),
+                () -> level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0));
+    }
+
+    private void doMovement(double targetDistance, CommandSwerveDrivetrain drivetrain, Vision vision) {
+        if (targetTagID == 0) {
+            return;
+        }
+
+        double rotation = angleMap.get(targetTagID);
+
+        double targetOffset;
+
+        if (RobotContainer.alignmentRight) {
+            targetOffset = -Constants.kSideOffset;
+        } else {
+            targetOffset = Constants.kSideOffset;
+        }
+
+        Pose2d relativePose = drivetrain.getPose().relativeTo(fieldLayout.getTagPose(targetTagID).get().toPose2d());
+
+        ChassisSpeeds speeds = new ChassisSpeeds();
+
+        SmartDashboard.putNumber("xrel", relativePose.getX());
+        SmartDashboard.putNumber("yrel", relativePose.getY());
+
+        if (drivetrain.getFrontRangeIsDetected()) {
+            xDistance = drivetrain.getFrontRange();
+        } else {
+            xDistance = relativePose.getX() - .8125 / 2.0;
+        }
+        if (vision.seenTagID() != 0) {
+            yOffset = -Math.tan(Math.toRadians(vision.getXOffset())) * xDistance - .184;
+        } else {
+            yOffset = targetOffset;
+        }
+        if (isFirstTime) {
+            yPID.reset(yOffset);
+            xPID.reset(xDistance);
+            isFirstTime = false;
+        }
+        SmartDashboard.putNumber("Real X distance", xDistance);
+        speeds.vxMetersPerSecond = -xPID.calculate(xDistance, targetDistance);
+        // speeds.vxMetersPerSecond += Math.signum(speeds.vxMetersPerSecond) * 0.1;
+
+        speeds.vyMetersPerSecond = -yPID.calculate(yOffset, targetOffset);
+        // speeds.vyMetersPerSecond += Math.signum(speeds.vyMetersPerSecond) * 0.1;
+        yError = yPID.getPositionError();
+
+        speeds.omegaRadiansPerSecond = Math.toRadians(rotationPID.calculate(drivetrain.getGyroDegrees(), rotation));
+
+        drivetrain.drive(speeds);
     }
 
 }

@@ -131,8 +131,8 @@ public class Elevator extends SubsystemBase {
         return !m_retractLimit.get();
     }
 
-    public boolean isAtGrabHeight(){
-        return (getHeight() > 17 && getHeight() < 19);
+    public boolean isAtGrabHeight() {
+        return (getHeight() > 16.5 && getHeight() < 18.5);
     }
 
     public double getHeight() {

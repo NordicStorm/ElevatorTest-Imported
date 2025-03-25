@@ -8,6 +8,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.CANdiConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
@@ -19,6 +20,11 @@ import com.ctre.phoenix6.signals.S2FloatStateValue;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.revrobotics.AbsoluteEncoder;
 
+import edu.wpi.first.math.controller.ArmFeedforward;
+import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -53,11 +59,20 @@ public class Arm extends SubsystemBase {
 
     private final TalonFXConfiguration m_motorConfig = new TalonFXConfiguration();
     private final TalonFX m_motor = new TalonFX(MechanismConstants.kArmID, "rio");
-    private final MotionMagicExpoVoltage m_voltage = new MotionMagicExpoVoltage(0);
+    private final MotionMagicVoltage m_voltage = new MotionMagicVoltage(0);
 
     // TODO find CAN id
     public final CANdi m_candi = new CANdi(0, "rio");
     public final CANdiConfiguration configs_CANdi = new CANdiConfiguration();
+
+    private final ProfiledPIDController m_pidController = new ProfiledPIDController(2.4, 0, 0,
+        new TrapezoidProfile.Constraints(50, 150));
+
+    private double m_pidLastVelocitySetpoint = 0;
+    private double m_pidLastTime;
+
+    private ArmFeedforward m_feedforward =
+        new ArmFeedforward(0, .28235, .2, .005);
 
     //
     // State
@@ -90,8 +105,9 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot1.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
 
         m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-        m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 60; // Rotations Per second
+        m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 80; // Rotations Per second
         m_motorConfig.MotionMagic.MotionMagicAcceleration = 10;
+        m_motorConfig.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
         // velocity
         m_motorConfig.MotionMagic.MotionMagicExpo_kV = .12; // kV is around 0.12 V/rps
         m_motorConfig.MotionMagic.MotionMagicExpo_kA = .1; // Use a slower kA of 0.1 V/(rps/s)
@@ -165,9 +181,14 @@ public class Arm extends SubsystemBase {
         demandVoltage = OutputVoltage;
     }
 
-    public void setArmAngle(double position) {
+    public void setArmAngle(double heightInches) {
+        if (m_controlMode != ControlMode.kPID) {
+            m_pidController.reset(getArmAngle());
+            m_pidLastVelocitySetpoint = 0;
+            m_pidLastTime = Timer.getFPGATimestamp();
+        }
         m_controlMode = ControlMode.kPID;
-        m_desiredState = position;
+        m_desiredState = heightInches;
     }
 
     public boolean isAtSetPoint(){
@@ -207,13 +228,22 @@ public class Arm extends SubsystemBase {
                 break;
             case kPID:
 
-                if (getArmAngle() > m_desiredState + .025) {
+                /*double pidVoltage = m_pidController.calculate(getArmAngle(), m_desiredState);
+                double dt = Timer.getFPGATimestamp() - m_pidLastTime;
+                double accelerationSetpoint = (m_pidController.getSetpoint().velocity - m_pidLastVelocitySetpoint) / dt;
+                double feedforwardVoltage = m_feedforward.calculate(m_pidController.getSetpoint().velocity, accelerationSetpoint);
+        
+                double outputVoltage = pidVoltage + feedforwardVoltage;
+                m_motor.setVoltage(outputVoltage);*/
+
+               if (getArmAngle() > m_desiredState + .05) {
                     m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(1));
                     SmartDashboard.putBoolean("Is arm using slot 1?", true);
                 } else {
                     m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(0));
                     SmartDashboard.putBoolean("Is arm using slot 1?", false);
                 }
+
                 break;
             case kStop:
                 // Fall through to default
