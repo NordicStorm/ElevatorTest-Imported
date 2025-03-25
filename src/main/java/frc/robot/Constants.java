@@ -41,7 +41,7 @@ public final class Constants {
     public static final double kArmStraightUp = 0.4934 - .25; // TODO make Cam finish the constants
     public static final double kArmStraightOut = 0;
     public static final double kArmStraightDown = -.265;
-    public static final double kArmAfterMiddleCoralOutake = .1;
+    public static final double kArmAfterMiddleCoralOutake = .08;
   }
 
   public static class ElevatorConstants {
@@ -51,7 +51,7 @@ public final class Constants {
   }
 
   public enum Position {
-    ELEVATOR_ZERO(.13, MechanismConstants.kWristHorizontalPos, 0, 0),
+    ELEVATOR_ZERO(.13, MechanismConstants.kWristHorizontalPos, -0.4, 0),
 
     GROUND_INTAKE(-.084, MechanismConstants.kWristHorizontalPos, 2, 1),
 
@@ -61,7 +61,7 @@ public final class Constants {
 
     L1(-.0539, MechanismConstants.kWristVerticalPos, 11.6, .515- 0.238-.03), // 305 = none, 190=resting,
 
-    L2(.132, MechanismConstants.kWristHorizontalPos, 2.5, .325- 0.238-.03), // .486
+    L2(.132, MechanismConstants.kWristHorizontalPos, 1, .325- 0.238-.03), // .486
 
     L3(.132, MechanismConstants.kWristHorizontalPos, 16.75, .3- 0.238-.03), // .3 away when coral is on the reef
 

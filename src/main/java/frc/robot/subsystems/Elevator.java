@@ -36,8 +36,8 @@ public class Elevator extends SubsystemBase {
     // Hardware
     //
     private final TalonFXConfiguration m_motorConfig = new TalonFXConfiguration();
-    private final TalonFX m_motor = new TalonFX(MechanismConstants.kElevatorMotorID, TunerConstants.kCANBus);
-    private final TalonFX m_motorFollower = new TalonFX(MechanismConstants.kElevatorMotorFollowerID, TunerConstants.kCANBus);
+    private final TalonFX m_motor = new TalonFX(MechanismConstants.kElevatorMotorID, "CANivore");
+    private final TalonFX m_motorFollower = new TalonFX(MechanismConstants.kElevatorMotorFollowerID, "CANivore");
     private final DigitalInput m_retractLimit = new DigitalInput(MechanismConstants.kRetractLimitSwitchChannel);;;;;;;;;;;;;;;
    
     //

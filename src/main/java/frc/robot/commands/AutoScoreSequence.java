@@ -60,7 +60,8 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
     public static AprilTagFieldLayout fieldLayout;
 
     public AutoScoreSequence(Arm arm, Elevator elevator, Wrist wrist, CoralIntake intake,
-            CommandSwerveDrivetrain drivetrain, Vision vision) {
+            CommandSwerveDrivetrain drivetrain, Vision vision, boolean hopperImmediately,
+            int forcedTagID) {
 
         try {
             fieldLayout = AprilTagFieldLayout.loadFromResource(AprilTagFields.k2025ReefscapeWelded.m_resourceFile);
@@ -78,13 +79,13 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
             @Override
             public void initialize() {
-                targetTagID = 0;
+                targetTagID = forcedTagID;
                 done = false;
                 xDistance = 999;
                 yError = 999;
                 rotationPID = new ProfiledPIDController(10, 0, 0, new Constraints(400, 300));
-                xPID = new ProfiledPIDController(3, 0, 0, new Constraints(4, 2));
-                yPID = new ProfiledPIDController(4, 0, 0, new Constraints(4, 2));
+                xPID = new ProfiledPIDController(5, 0, 0, new Constraints(4, 2));
+                yPID = new ProfiledPIDController(5, 0, 0, new Constraints(4, 2));
                 rotationPID.enableContinuousInput(-180, 180);
                 rotationPID.reset(drivetrain.getGyroDegrees());
                 isFirstTime = true;
@@ -105,7 +106,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 doMovement(.8, drivetrain, vision);
                 SmartDashboard.putNumber("xdist", xDistance);
                 SmartDashboard.putNumber("yError", yError);
-                if (xDistance <= 1 && Math.abs(yPID.getPositionError()) < .01) {
+                if (xDistance <= 1 && Math.abs(yError) < .01) {
                     done = true;
                 }
             }
@@ -132,7 +133,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             public void execute() {
                 doMovement(.4, drivetrain, vision);
 
-                if (xDistance <= .45 && Math.abs(yPID.getPositionError()) < .01) {
+                if (xDistance <= .45 && Math.abs(yError) < .01) {
                     done = true;
                 }
             }
@@ -157,7 +158,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
             @Override
             public boolean isFinished() {
-                return Math.abs(xPID.getPositionError()) < .02;
+                return Math.abs(xDistance - level.dist) < .02;
             }
 
             @Override
@@ -169,10 +170,12 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
         addCommands(new Command() {
 
             long timeToEnd;
+            long timeToSpin;
 
             @Override
             public void initialize() {
                 timeToEnd = 0;
+                timeToSpin = System.currentTimeMillis() + 300;
             }
 
             @Override
@@ -180,20 +183,31 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 if (level == Constants.Position.L1) {
                     intake.setIntakeVoltage(1);
                 } else if (level == Constants.Position.L2 || level == Constants.Position.L3) {
-                    intake.setIntakeVoltage(.25);
+                    intake.setIntakeVoltage(.9);
                     arm.setArmAngle(Constants.ArmConstants.kArmAfterMiddleCoralOutake);
+                    elevator.setPID(level.elevatorPos - 1);
                 } else if (level == Constants.Position.L4) {
-                    arm.setArmAngle(.6);
-                    intake.setIntakeVoltage(.25);
+                    arm.setArmAngle(0.04);
+                    if (arm.isAtSetPoint() || timeToSpin < System.currentTimeMillis()) {
+                        intake.setIntakeVoltage(.9);
+                        elevator.setPID(level.elevatorPos - 2);
+                        drivetrain.drive(new ChassisSpeeds(-0.5, 0, 0));
+                    }
                 }
                 if (arm.isAtSetPoint() && timeToEnd == 0) {
-                    timeToEnd = System.currentTimeMillis() + 100;
+                    timeToEnd = System.currentTimeMillis() + 200;
                 }
             }
 
             @Override
             public boolean isFinished() {
-                return timeToEnd != 0 && System.currentTimeMillis() >= timeToEnd;
+                return timeToEnd != 0 && System.currentTimeMillis() >= timeToEnd && !intake.hasCoral();
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                drivetrain.drive(new ChassisSpeeds());
+                intake.setIntakeVoltage(0);
             }
 
         });
@@ -210,7 +224,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 if (level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0) {
                     return drivetrain.getFrontRange() > 0.5;
                 } else {
-                    return drivetrain.getFrontRange() > 1;
+                    return drivetrain.getFrontRange() > 0.5;
                 }
             }
 
@@ -271,8 +285,9 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                             }
                         })
 
-                ), new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
-                        .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)),
+                ), (new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
+                        .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)))
+                        .unless(() -> !hopperImmediately),
                 () -> level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0));
     }
 
@@ -319,7 +334,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
         speeds.vyMetersPerSecond = -yPID.calculate(yOffset, targetOffset);
         // speeds.vyMetersPerSecond += Math.signum(speeds.vyMetersPerSecond) * 0.1;
-        yError = yPID.getPositionError();
+        yError = yOffset - targetOffset;
 
         speeds.omegaRadiansPerSecond = Math.toRadians(rotationPID.calculate(drivetrain.getGyroDegrees(), rotation));
 

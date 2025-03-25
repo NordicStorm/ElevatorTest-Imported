@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -57,10 +58,11 @@ public class RobotContainer {
   private final CoralIntake m_CoralIntake = new CoralIntake();
   private final Climber m_climber = new Climber();
   private final Vision m_vision = new Vision();
+  
 
   public static boolean alignmentRight = true; // True is right, False is left
   public static Constants.Position targetLevel = Constants.Position.L3;
-  public static int rakeAlgae; // 0 is none, 1 is low algae, 2 is high algae
+  public static int rakeAlgae = 0; // 0 is none, 1 is low algae, 2 is high algae
 
   // Replace with CommandPS4Controller or Commandm_driverController if needed
   private final CommandXboxController m_driverController = new CommandXboxController(
@@ -162,19 +164,19 @@ public class RobotContainer {
     m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.25));
     m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.25));
     m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.5)); // Intake
-    m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); // Outake
+    //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); // Outake
     //m_driverController.povUp().onTrue(m_wrist.setWristHorizontal());
     //m_driverController.povDown().onTrue(m_wrist.setWristVertical());
                
     // m_driverController.povLeft().whileTrue(drivetrain.applyRequest(()->drive.withDriveRequestType(DriveRequestType.Velocity).withVelocityX(4.5)));
-    m_driverController.povDown().onTrue(new MoveUpperSubsystems(() ->Constants.Position.L1, m_arm, m_elevator, m_wrist));
-    m_driverController.povLeft().onTrue(new MoveUpperSubsystems(() ->Constants.Position.L2, m_arm, m_elevator, m_wrist));
-    m_driverController.povUp().onTrue(new MoveUpperSubsystems(() ->Constants.Position.L3, m_arm, m_elevator, m_wrist));
-    m_driverController.povRight().onTrue(new MoveUpperSubsystems(() -> Constants.Position.L4, m_arm, m_elevator, m_wrist));
+    m_driverController.povDown().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L1));
+    m_driverController.povLeft().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L2));
+    m_driverController.povUp().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L3));
+    m_driverController.povRight().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L4));
   
 
-    m_driverController.y().whileTrue(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
-    m_driverController.back().whileTrue(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision));
+    m_driverController.y().onTrue(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
+    m_driverController.back().whileTrue(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0));
   } 
 
   /**

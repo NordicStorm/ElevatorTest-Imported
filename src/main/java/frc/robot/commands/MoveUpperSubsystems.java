@@ -5,11 +5,12 @@ import java.util.function.Supplier;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Constants.Position;
+import frc.robot.commands.paths.CommandPathPiece;
 import frc.robot.subsystems.Arm;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Wrist;
 
-public class MoveUpperSubsystems extends Command {
+public class MoveUpperSubsystems extends Command implements CommandPathPiece{
 
     private Supplier<Position> m_positionSupplier;
     private Arm m_arm;

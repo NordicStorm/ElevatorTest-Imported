@@ -20,6 +20,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Notifier;
@@ -28,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.RobotContainer;
 import frc.robot.Telemetry;
 import frc.robot.commands.paths.DriveTrainConfig;
 import frc.robot.commands.paths.PathableDrivetrain;
@@ -50,6 +52,10 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     private final SwerveRequest.RobotCentric m_drive = new SwerveRequest.RobotCentric()
             .withDeadband(0).withRotationalDeadband(0) // Add a 10% deadband
             .withDriveRequestType(DriveRequestType.Velocity);
+
+    private final Spark blinkinPark = new Spark(0);
+    
+    
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -145,6 +151,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         SmartDashboard.putData(m_fieldDisplay);
         initializeDriveTrainConfig();
+
+        setBlinkinDrive();
     }
 
     /**
@@ -172,6 +180,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         }
         SmartDashboard.putData(m_fieldDisplay);
         initializeDriveTrainConfig();
+        setBlinkinDrive();
     }
 
     private void initializeDriveTrainConfig() {
@@ -283,6 +292,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
         SmartDashboard.putNumber("Front CAN range", m_frontCANrange.getDistance().getValueAsDouble());
         SmartDashboard.putNumber("Back CAN range", m_backCANrange.getDistance().getValueAsDouble());
+        SmartDashboard.putString("Target Level", RobotContainer.targetLevel.toString());
 
         m_fieldDisplay.setRobotPose(getState().Pose);
 
@@ -311,6 +321,14 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     public boolean getBackRangeIsDetected(){
         return m_backCANrange.getIsDetected().getValue();
+    }
+
+    public void setBlinkinPark() {
+        blinkinPark.set(-0.59);
+    }
+
+    public void setBlinkinDrive() {
+        blinkinPark.set(0.99);
     }
 
     private void startSimThread() {
