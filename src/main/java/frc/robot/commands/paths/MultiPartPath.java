@@ -58,7 +58,6 @@ public class MultiPartPath {
      */
     public MultiPartPath(PathableDrivetrain drivetrain) {
         this(drivetrain, drivetrain.getConfig().makeClone(), null);
-
     }
 
     public MultiPartPath(PathableDrivetrain drivetrain, DriveTrainConfig config, MultiPartPath parent) {

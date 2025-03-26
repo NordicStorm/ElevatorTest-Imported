@@ -6,10 +6,10 @@ import frc.robot.RobotContainer;
 import frc.robot.commands.paths.CommandPathPiece;
 
 public class SetAutoScoreParameters extends InstantCommand implements CommandPathPiece{
-    public SetAutoScoreParameters(Constants.Position position, boolean isRight, int whichAlgae){
+    public SetAutoScoreParameters(Constants.Position position, boolean isLeft, int whichAlgae){
         super(()-> {
             RobotContainer.targetLevel = position; 
-            RobotContainer.alignmentRight = isRight;
+            RobotContainer.alignmentLeft = isLeft;
             RobotContainer.rakeAlgae = whichAlgae;
         });
     }

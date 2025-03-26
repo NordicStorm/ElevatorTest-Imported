@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
+import frc.robot.LimelightHelpers;
 import frc.robot.Constants.MechanismConstants;
 
 public class Arm extends SubsystemBase {
@@ -121,7 +122,7 @@ public class Arm extends SubsystemBase {
         configs_CANdi.DigitalInputs.S2FloatState = S2FloatStateValue.PullHigh;
         // configs_CANdi.PWM2.AbsoluteSensorDiscontinuityPoint = 0.5;
         configs_CANdi.PWM1.SensorDirection = false;
-        configs_CANdi.PWM1.AbsoluteSensorOffset = 0.899688 - .25;
+        configs_CANdi.PWM1.AbsoluteSensorOffset = 0.899688 - .25 ;
 
         m_candi.getConfigurator().apply(configs_CANdi);
         m_candi.getS1Closed().setUpdateFrequency(100);
@@ -238,10 +239,8 @@ public class Arm extends SubsystemBase {
 
                if (getArmAngle() > m_desiredState + .05) {
                     m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(1));
-                    SmartDashboard.putBoolean("Is arm using slot 1?", true);
                 } else {
                     m_motor.setControl(m_voltage.withPosition(m_desiredState).withSlot(0));
-                    SmartDashboard.putBoolean("Is arm using slot 1?", false);
                 }
 
                 break;

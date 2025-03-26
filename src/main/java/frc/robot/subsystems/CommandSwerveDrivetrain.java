@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.FovParamsConfigs;
 import com.ctre.phoenix6.hardware.CANrange;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
@@ -189,6 +190,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         m_driveTrainConfig.maxAnglularVelocity = 10;
         m_driveTrainConfig.maxAngularAcceleration = 8;
         m_driveTrainConfig.maxCentripetalAcceleration = 7;
+
+        m_driveTrainConfig.rotationCorrectionP = 10;
+        
     }
 
     /**
@@ -293,7 +297,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("Front CAN range", m_frontCANrange.getDistance().getValueAsDouble());
         SmartDashboard.putNumber("Back CAN range", m_backCANrange.getDistance().getValueAsDouble());
         SmartDashboard.putString("Target Level", RobotContainer.targetLevel.toString());
-
+        SmartDashboard.putBoolean("Target Left Side?", RobotContainer.alignmentLeft);
         m_fieldDisplay.setRobotPose(getState().Pose);
 
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
@@ -308,7 +312,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public double getFrontRange(){
-        return m_frontCANrange.getDistance().getValueAsDouble() - 0.238;
+        return m_frontCANrange.getDistance().getValueAsDouble() - 0.238 - 0.0127;
     }
 
     public double getBackRange(){
@@ -324,11 +328,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     }
 
     public void setBlinkinPark() {
-        blinkinPark.set(-0.59);
+        blinkinPark.set(0.07);
     }
 
     public void setBlinkinDrive() {
-        blinkinPark.set(0.99);
+        blinkinPark.set(0.87);
     }
 
     private void startSimThread() {
@@ -405,7 +409,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
     @Override
     public void setPose(Pose2d pose) {
-        resetPose(pose);
+        resetTranslation(pose.getTranslation());
     }
 
     @Override

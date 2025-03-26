@@ -52,6 +52,11 @@ public class Wrist extends SubsystemBase {
         wristConfig.Commutation.MotorArrangement = MotorArrangementValue.Brushed_DC;
         wristConfig.Commutation.BrushedMotorWiring = BrushedMotorWiringValue.Leads_A_and_B;
 
+        wristConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+        wristConfig.CurrentLimits.SupplyCurrentLimit = 20;
+        wristConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+        wristConfig.CurrentLimits.StatorCurrentLimit = 20;
+
         m_wristMotor.getConfigurator().apply(wristConfig);
     }
 
@@ -78,11 +83,11 @@ public class Wrist extends SubsystemBase {
     }
 
     public boolean isHorizontal() {
-        return getWristRotation() < 0;
+        return getWristRotation() < -.19;
     }
 
     public boolean isVertical() {
-        return getWristRotation() > .2;
+        return getWristRotation() > .025;
     }
 
     public boolean isAtSetPoint(){

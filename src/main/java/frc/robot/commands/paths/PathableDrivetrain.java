@@ -20,7 +20,7 @@ public interface PathableDrivetrain {
     Pose2d getPose();
 
     /**
-     * Reset the pose to the given one
+     * Reset the pose to the given one. Only should set the translation, not whole rotation!!
      * @param pose
      */
     void setPose(Pose2d pose);

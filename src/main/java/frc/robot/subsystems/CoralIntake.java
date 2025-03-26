@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.RobotContainer;
 import frc.robot.commands.RollingAverage;
 
 import com.revrobotics.spark.SparkMax;
@@ -65,7 +66,7 @@ public class CoralIntake extends SubsystemBase {
     }
 
     public boolean isInTrough(){
-        return (TOF.getRange() < 200 && TOF.getRange() > 170 && isRangeValid()); //TODO
+        return (TOF.getRange() < 210 && TOF.getRange() > 180 && isRangeValid()); //TODO
     }
 
     public void setIntakeVoltage(double IntakeVoltage) {
@@ -91,6 +92,10 @@ public class CoralIntake extends SubsystemBase {
 
         m_rightIntakeMotor.set(m_intakeDemand);
         m_leftIntakeMotor.set(m_intakeDemand);
+
+        if (hasCoral()) {
+            RobotContainer.drivetrain.setBlinkinDrive();
+        }
 
         SmartDashboard.putNumber("Voltage", m_intakeDemand);
         SmartDashboard.putNumber("Velocity", m_leftIntakeMotor.getEncoder().getVelocity());

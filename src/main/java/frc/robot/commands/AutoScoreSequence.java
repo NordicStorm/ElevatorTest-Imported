@@ -11,6 +11,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
@@ -28,7 +29,7 @@ import static java.util.Map.entry;
 import java.io.IOException;
 
 public class AutoScoreSequence extends SequentialCommandGroup implements CommandPathPiece {
-    Map<Integer, Double> angleMap = Map.ofEntries(
+   public static  Map<Integer, Double> angleMap = Map.ofEntries(
             entry(17, 60.0),
             entry(18, 0.0),
             entry(19, -60.0),
@@ -185,7 +186,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 } else if (level == Constants.Position.L2 || level == Constants.Position.L3) {
                     intake.setIntakeVoltage(.9);
                     arm.setArmAngle(Constants.ArmConstants.kArmAfterMiddleCoralOutake);
-                    elevator.setPID(level.elevatorPos - 1);
+                    elevator.setPID(level.elevatorPos - 2);
                 } else if (level == Constants.Position.L4) {
                     arm.setArmAngle(0.04);
                     if (arm.isAtSetPoint() || timeToSpin < System.currentTimeMillis()) {
@@ -195,7 +196,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                     }
                 }
                 if (arm.isAtSetPoint() && timeToEnd == 0) {
-                    timeToEnd = System.currentTimeMillis() + 200;
+                    timeToEnd = System.currentTimeMillis() + 400;
                 }
             }
 
@@ -207,7 +208,8 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             @Override
             public void end(boolean interrupted) {
                 drivetrain.drive(new ChassisSpeeds());
-                intake.setIntakeVoltage(0);
+                if(interrupted)
+                    intake.setIntakeVoltage(0);
             }
 
         });
@@ -230,6 +232,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
             @Override
             public void end(boolean interrupted) {
+                intake.stop();
                 drivetrain.drive(new ChassisSpeeds());
             }
         });
@@ -244,7 +247,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
             @Override
             public void execute() {
-                if (RobotContainer.alignmentRight) {
+                if (RobotContainer.alignmentLeft) {
                     drivetrain.drive(new ChassisSpeeds(0, 1, 0));
                 } else {
                     drivetrain.drive(new ChassisSpeeds(0, -1, 0));
@@ -285,9 +288,9 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                             }
                         })
 
-                ), (new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
+                ), new ProxyCommand((new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
                         .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)))
-                        .unless(() -> !hopperImmediately),
+                        .unless(() -> !hopperImmediately)),
                 () -> level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0));
     }
 
@@ -300,10 +303,10 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
         double targetOffset;
 
-        if (RobotContainer.alignmentRight) {
-            targetOffset = -Constants.kSideOffset;
+        if (RobotContainer.alignmentLeft) {
+            targetOffset = Constants.kLeftOffset;
         } else {
-            targetOffset = Constants.kSideOffset;
+            targetOffset = Constants.kRightOffset;
         }
 
         Pose2d relativePose = drivetrain.getPose().relativeTo(fieldLayout.getTagPose(targetTagID).get().toPose2d());

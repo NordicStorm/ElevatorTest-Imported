@@ -113,7 +113,7 @@ public class Elevator extends SubsystemBase {
         m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
         m_motorConfig.SoftwareLimitSwitch.ForwardSoftLimitThreshold = 113.5;
         m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-        m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = 0;
+        m_motorConfig.SoftwareLimitSwitch.ReverseSoftLimitThreshold = -100;
         m_motor.getConfigurator().apply(m_motorConfig);
         
         // We want to read position data from the leader motor
@@ -148,6 +148,11 @@ public class Elevator extends SubsystemBase {
         m_demand = 0.0;
     }
 
+    public void stopManual() {
+        m_controlMode = ControlMode.kPID;
+        m_demand = 0.0;
+    }
+
     public void setOutputVoltage(double OutputVoltage) {
         m_controlMode = ControlMode.kOpenLoop;
         m_demand = OutputVoltage;
@@ -164,7 +169,11 @@ public class Elevator extends SubsystemBase {
     }
 
     public boolean isAtSetPoint(){
-        return (Math.abs(m_demand - getHeight()) < .5);
+        if(m_demand > 0) {
+            return (Math.abs(m_demand - getHeight()) < .5);
+        } else {
+            return isAtRetractLimit();
+        }
     }
 
    
@@ -175,7 +184,7 @@ public class Elevator extends SubsystemBase {
     
     public Command openLoopCommand(DoubleSupplier OutputVoltageSupplier) {
         return Commands.runEnd(
-            () -> this.setOutputVoltage(OutputVoltageSupplier.getAsDouble()), this::stop, this);
+            () -> this.setOutputVoltage(OutputVoltageSupplier.getAsDouble()), this::stopManual, this);
     }
 
     public Command openLoopCommand(double OutputVoltage) {
@@ -202,6 +211,7 @@ public class Elevator extends SubsystemBase {
 
 
 
+
     @Override
     public void periodic() {
         // TODO add switch to disable break mode when disabled
@@ -216,8 +226,15 @@ public class Elevator extends SubsystemBase {
         SmartDashboard.putNumber("Mechanism height", getHeight());
         SmartDashboard.putNumber("Mechanism rotations", m_motor.getPosition().getValueAsDouble());
 
-        if (isAtRetractLimit()){
+        if (m_demand < 0 && !isAtRetractLimit() && m_motor.getPosition().getValueAsDouble() < 1){
+            setOutputVoltage(-1);
+        }
+
+        if (isAtRetractLimit() && Math.abs(m_motor.getPosition().getValueAsDouble()) > .25){
             m_motor.setPosition(0);
+        }
+        if(isAtRetractLimit() && m_demand < 0) {
+            setOutputVoltage(0);
         }
 
         switch (m_controlMode) {
@@ -235,11 +252,11 @@ public class Elevator extends SubsystemBase {
                 double outputVoltage = pidVoltage + feedforwardVoltage;
                 m_motor.setVoltage(outputVoltage);
 
-                SmartDashboard.putNumber("Elevator Output Voltage", pidVoltage);
-                SmartDashboard.putNumber("Elevator PID Output Voltage", feedforwardVoltage);
-                SmartDashboard.putNumber("Elevator Feedfoward Output Voltage", outputVoltage);
-        		SmartDashboard.putNumber("Elevator Profile Position", m_pidController.getSetpoint().position);
-        		SmartDashboard.putNumber("Elevator Profile Velocity", m_pidController.getSetpoint().velocity);
+                // SmartDashboard.putNumber("Elevator Output Voltage", pidVoltage);
+                // SmartDashboard.putNumber("Elevator PID Output Voltage", feedforwardVoltage);
+                // SmartDashboard.putNumber("Elevator Feedfoward Output Voltage", outputVoltage);
+        		// SmartDashboard.putNumber("Elevator Profile Position", m_pidController.getSetpoint().position);
+        		// SmartDashboard.putNumber("Elevator Profile Velocity", m_pidController.getSetpoint().velocity);
 
                 m_pidLastVelocitySetpoint = m_pidController.getSetpoint().velocity;
                 m_pidLastTime = Timer.getFPGATimestamp();

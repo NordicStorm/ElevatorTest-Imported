@@ -7,6 +7,7 @@ package frc.robot;
 import java.lang.Math;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.AutoReceiveAlign;
 import frc.robot.commands.AutoScoreSequence;
 import frc.robot.commands.Autos;
 import frc.robot.commands.InternalIntake;
@@ -60,13 +61,15 @@ public class RobotContainer {
   private final Vision m_vision = new Vision();
   
 
-  public static boolean alignmentRight = true; // True is right, False is left
+  public static boolean alignmentLeft = true; // True is right, False is left
   public static Constants.Position targetLevel = Constants.Position.L3;
   public static int rakeAlgae = 0; // 0 is none, 1 is low algae, 2 is high algae
+  public static boolean isCoralMode = true;
 
   // Replace with CommandPS4Controller or Commandm_driverController if needed
   private final CommandXboxController m_driverController = new CommandXboxController(
       OperatorConstants.kDriverControllerPort);
+  private final CommandXboxController m_secondController = new CommandXboxController(1);
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -92,6 +95,7 @@ public class RobotContainer {
   public RobotContainer() {
     SignalLogger.setPath("/media/sda1/ctre-logs/");
     //SignalLogger.start();
+    Autos.putToDashboard();
     configureBindings();
   }
 
@@ -110,25 +114,7 @@ public class RobotContainer {
    * m_driverControllers}.
    */
   private void configureBindings() {
-
-    // m_driverController.leftBumper().onTrue(Commands.runOnce(SignalLogger::start));
-    // m_driverController.rightBumper().onTrue(Commands.runOnce(SignalLogger::stop));
-
-    // m_driverController Y = quasistatic forward
-    // m_driverController A = quasistatic reverse
-    // m_driverController B = dynamic forward
-    // m_driverController X = dyanmic reverse
-
-    // m_driverController.y().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    // m_driverController.a().whileTrue(m_elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    m_driverController.b().whileTrue(m_elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    m_driverController.x().whileTrue(m_elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
     m_driverController.start().onTrue(new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, m_arm, m_elevator, m_wrist));
-    SmartDashboard.putNumber("Arm test setpoint", 0);
-    // m_driverController.leftTrigger().whileTrue(m_elevator.armAngleCommand(()->
-    // SmartDashboard.getNumber("Arm test setpoint", 0)));
-
-
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() -> drive.withVelocityX(MaxSpeed * -m_driverController.getLeftY()) // Drive forward
@@ -138,46 +124,40 @@ public class RobotContainer {
             .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with
                                                                                   // negative X (left)
         ));
+    new Trigger(() -> m_CoralIntake.isInTrough() && m_arm.isAtSetPoint()
+        && m_arm.getArmGeneralPosition() == GeneralArmPosition.straightDown
+        && m_wrist.isHorizontal() && m_elevator.isAtGrabHeight()).debounce(.5).onTrue(new InternalIntake(m_arm, m_elevator, m_wrist, m_CoralIntake));
 
-    // m_driverController.a().whileTrue(drivetrain.applyRequest(() -> brake));
-    // m_driverController.b().whileTrue(drivetrain
-    // .applyRequest(() -> point
-    // .withModuleDirection(new Rotation2d(-m_driverController.getLeftY(),
-    // -m_driverController.getLeftX()))));
-
-    // Run SysId routines when holding back/start and X/Y.
-    // Note that each routine should be run exactly once in a single log.
-    m_driverController.back().and(m_driverController.y()).whileTrue(drivetrain.sysIdDynamic(Direction.kForward));
-    m_driverController.back().and(m_driverController.x()).whileTrue(drivetrain.sysIdDynamic(Direction.kReverse));
-    m_driverController.start().and(m_driverController.y()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kForward));
-    m_driverController.start().and(m_driverController.x()).whileTrue(drivetrain.sysIdQuasistatic(Direction.kReverse));
-
+  
     // reset the field-centric heading on left bumper press
     m_driverController.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.resetRotation(Rotation2d.kZero)));
 
-    drivetrain.registerTelemetry(logger::telemeterize);
+    //drivetrain.registerTelemetry(logger::telemeterize);
 
-    new Trigger(() -> m_CoralIntake.isInTrough() && m_arm.isAtSetPoint()
-        && m_arm.getArmGeneralPosition() == GeneralArmPosition.straightDown
-        && m_wrist.isHorizontal() && m_elevator.isAtGrabHeight()).onTrue(new InternalIntake(m_arm, m_elevator, m_wrist, m_CoralIntake));
+    
+    m_driverController.leftTrigger().and(() -> !isCoralMode).whileTrue(m_climber.openLoopClimbCommand(.25));
+    m_driverController.rightTrigger().and(() -> !isCoralMode).whileTrue(m_climber.openLoopClimbCommand(-.25));
 
-    m_driverController.rightTrigger().whileTrue(m_climber.openLoopClimbCommand(.25));
-    m_driverController.leftTrigger().whileTrue(m_climber.openLoopClimbCommand(-.25));
-    m_driverController.rightBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(-.5)); // Intake
-    //m_driverController.leftBumper().whileTrue(m_CoralIntake.openLoopIntakeCommand(1)); // Outake
-    //m_driverController.povUp().onTrue(m_wrist.setWristHorizontal());
-    //m_driverController.povDown().onTrue(m_wrist.setWristVertical());
-               
+    m_driverController.leftTrigger().and(() -> isCoralMode).whileTrue(new InstantCommand(() -> alignmentLeft = true).andThen(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0))); 
+    m_driverController.rightTrigger().and(() -> isCoralMode).whileTrue(new InstantCommand(() -> alignmentLeft = false).andThen(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0))); 
+
     // m_driverController.povLeft().whileTrue(drivetrain.applyRequest(()->drive.withDriveRequestType(DriveRequestType.Velocity).withVelocityX(4.5)));
-    m_driverController.povDown().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L1));
-    m_driverController.povLeft().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L2));
-    m_driverController.povUp().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L3));
-    m_driverController.povRight().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L4));
+    m_driverController.povUp().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L1));
+    m_driverController.povRight().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L2));
+    m_driverController.povDown().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L3));
+    m_driverController.povLeft().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L4));
   
 
     m_driverController.y().onTrue(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
-    m_driverController.back().whileTrue(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0));
+    m_driverController.back().onTrue(new InstantCommand(() -> isCoralMode = !isCoralMode));
+    m_driverController.a().whileTrue(new AutoReceiveAlign(0, drivetrain, m_CoralIntake));
+
+    
+    m_secondController.y().whileTrue(m_elevator.openLoopCommand(() -> 1));
+    m_secondController.a().whileTrue(m_elevator.openLoopCommand(() -> -1));
+    m_secondController.b().whileTrue(new MoveUpperSubsystems(() -> Constants.Position.L3, m_arm, m_elevator, m_wrist));
   } 
+
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

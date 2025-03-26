@@ -18,7 +18,8 @@ package frc.robot;
  */
 public final class Constants {
 
-  public static final double kSideOffset = .182;
+  public static final double kLeftOffset = -.182;
+  public static final double kRightOffset = 0.05;
 
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
@@ -33,8 +34,8 @@ public final class Constants {
     public static final int kClimberID = 23;
     public static final double kRotationToInches = .418; // 1.0/20.0 * ((68.8/25.4)/2) * Math.PI * 2.0;//TODO: Find the
                                                          // correct value
-    public static final double kWristVerticalPos = 0.214;
-    public static final double kWristHorizontalPos = -0.039063;
+    public static final double kWristVerticalPos = 0.035;
+    public static final double kWristHorizontalPos = -0.209;
   }
 
   public static class ArmConstants {
@@ -51,13 +52,13 @@ public final class Constants {
   }
 
   public enum Position {
-    ELEVATOR_ZERO(.13, MechanismConstants.kWristHorizontalPos, -0.4, 0),
+    ELEVATOR_ZERO(.13, MechanismConstants.kWristHorizontalPos, -0.25, 0),
 
     GROUND_INTAKE(-.084, MechanismConstants.kWristHorizontalPos, 2, 1),
 
     INTERNAL_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 14.0, 1),
 
-    HOPPER_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 17.5, 1),
+    HOPPER_INTAKE(ArmConstants.kArmStraightDown, MechanismConstants.kWristHorizontalPos, 18, 1),
 
     L1(-.0539, MechanismConstants.kWristVerticalPos, 11.6, .515- 0.238-.03), // 305 = none, 190=resting,
 

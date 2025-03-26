@@ -3,11 +3,12 @@ package frc.robot.commands.paths;
 import java.lang.reflect.Field;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 /**
  * Used to set the value of a DrivetrainConfig at runtime using reflection
  */
-public class ConfigPropertySetPiece extends Command implements CommandPathPiece {
+public class ConfigPropertySetPiece extends InstantCommand implements CommandPathPiece {
     MultiPartPath path;
     String propName;
     double value;
