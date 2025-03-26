@@ -1,13 +1,9 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Volts;
 
-import java.util.function.DoubleSupplier;
 
-import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.CANdiConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.CANdi;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -17,11 +13,8 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.signals.S2CloseStateValue;
 import com.ctre.phoenix6.signals.S2FloatStateValue;
-import com.fasterxml.jackson.annotation.JsonCreator.Mode;
-import com.revrobotics.AbsoluteEncoder;
 
 import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
@@ -29,9 +22,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpers;
 import frc.robot.Constants.MechanismConstants;
 
 public class Arm extends SubsystemBase {
@@ -92,7 +83,7 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot0.kS = .18;
         m_motorConfig.Slot0.kV = .12; // TODO: A velocity target of 1 rps results in 0.12 V output
         m_motorConfig.Slot0.kA = 10; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        m_motorConfig.Slot0.kP = 44; // TODO: A position error of 2.5 rotations results in 12 V output
+        m_motorConfig.Slot0.kP = 50; // TODO: A position error of 2.5 rotations results in 12 V output
         m_motorConfig.Slot0.kI = 0; // TODO: no output for integrated error
         m_motorConfig.Slot0.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
 
@@ -101,14 +92,14 @@ public class Arm extends SubsystemBase {
         m_motorConfig.Slot1.kS = .18;
         m_motorConfig.Slot1.kV = .1; // TODO: A velocity target of 1 rps results in 0.12 V output
         m_motorConfig.Slot1.kA = 10; // TODO: An acceleration of 1 rps/s requires 0.01 V output
-        m_motorConfig.Slot1.kP = 25; // TODO: A position error of 2.5 rotations results in 12 V output
+        m_motorConfig.Slot1.kP = 35; // TODO: A position error of 2.5 rotations results in 12 V output
         m_motorConfig.Slot1.kI = 0; // TODO: no output for integrated error
         m_motorConfig.Slot1.kD = 0; // TODO: A velocity error of 1 rps results in 0.1 V output
 
         m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 80; // Rotations Per second
         m_motorConfig.MotionMagic.MotionMagicAcceleration = 10;
-        m_motorConfig.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
+        m_motorConfig.ClosedLoopRamps.VoltageClosedLoopRampPeriod = .5;
         // velocity
         m_motorConfig.MotionMagic.MotionMagicExpo_kV = .12; // kV is around 0.12 V/rps
         m_motorConfig.MotionMagic.MotionMagicExpo_kA = .1; // Use a slower kA of 0.1 V/(rps/s)

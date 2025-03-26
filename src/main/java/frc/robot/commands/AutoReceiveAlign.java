@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
+import frc.robot.Constants;
 import frc.robot.commands.paths.CommandPathPiece;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import frc.robot.subsystems.CoralIntake;
@@ -28,9 +29,12 @@ public class AutoReceiveAlign extends SequentialCommandGroup implements CommandP
             ProfiledPIDController rotationController;
             boolean done;
             double m_targetAngle;
+            ProfiledPIDController xController;
+            boolean first;
             @Override
             public void initialize() {
                 rotationController = new ProfiledPIDController(10, 0, 0, new Constraints(400, 300));
+                xController = new ProfiledPIDController(7, 0, 0, new Constraints(4, 3));
                 rotationController.reset(drivetrain.getGyroDegrees());
                 rotationController.enableContinuousInput(-180, 180);
                 done = false;
@@ -59,13 +63,13 @@ public class AutoReceiveAlign extends SequentialCommandGroup implements CommandP
                 var speeds = new ChassisSpeeds();
                 speeds.omegaRadiansPerSecond = Math.toRadians(rotationController.calculate(drivetrain.getGyroDegrees(), m_targetAngle));
                 var range = drivetrain.getBackRangeIsDetected() ? drivetrain.getBackRange() : 2;
-                if(range > 0.3) {
-                    speeds.vxMetersPerSecond = -1;
-                } else if (range < 0.27) {
-                    speeds.vxMetersPerSecond = 1;
-                } else {
+                if (first) {
+                    xController.reset(range);
+                    first = false;
+                }
+                speeds.vxMetersPerSecond = xController.calculate(.2);
+                if (range < Constants.kBackRangeMaxDist && range > Constants.kBackRangeMinDist){
                     done = true;
-                    speeds.vxMetersPerSecond = 0;
                 }
                 drivetrain.drive(speeds);
             }
@@ -79,8 +83,24 @@ public class AutoReceiveAlign extends SequentialCommandGroup implements CommandP
             public void end(boolean interrupted) {
                 drivetrain.setControl(new SwerveRequest.SwerveDriveBrake());
                 drivetrain.setBlinkinPark();
+                if (interrupted) {
+                drivetrain.setBlinkinDrive();
+                }
             }
-        }.andThen(new WaitUntilCommand(() -> intake.isInTrough() || intake.hasCoral())));
+        }.andThen(new Command(){
+            @Override
+            public boolean isFinished(){
+                return intake.isInTrough() || intake.hasCoral();
+            }
+
+            @Override
+            public void end(boolean interrupted) {
+                drivetrain.setBlinkinDrive();
+            }
+        }
+        ));
+
+        
     }
 
     @Override

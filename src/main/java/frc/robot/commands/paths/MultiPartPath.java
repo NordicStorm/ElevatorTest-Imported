@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -221,7 +222,8 @@ public class MultiPartPath {
     public void flipAllX() {
         for (var pieceInfo : pieces) {
             var piece = pieceInfo.getFirst();
-            double totalWidth = 16.54;
+            double totalWidth = 17.548;
+            
             if (piece.getPieceType() == PieceType.Waypoint) {
                 WaypointPiece wpPiece = (WaypointPiece) piece;
                 Translation2d point = wpPiece.getPoint();
@@ -244,7 +246,7 @@ public class MultiPartPath {
      */
     public void flipAllY() {
         for (var pieceInfo : pieces) {
-            double totalHeight = 8.21;
+            double totalHeight = 8.052;
             var piece = pieceInfo.getFirst();
             if (piece.getPieceType() == PieceType.Waypoint) {
                 WaypointPiece wpPiece = (WaypointPiece) piece;

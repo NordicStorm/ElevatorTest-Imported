@@ -21,6 +21,11 @@ public final class Constants {
   public static final double kLeftOffset = -.182;
   public static final double kRightOffset = 0.05;
 
+  public static final double kBackRangeMinDist = .135;
+  public static final double kBestRangeDist = .33;
+  public static final double kBackRangeMaxDist = .355;
+
+
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
   }

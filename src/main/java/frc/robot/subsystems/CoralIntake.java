@@ -54,7 +54,7 @@ public class CoralIntake extends SubsystemBase {
     }
 
     public void stop() {
-        m_intakeDemand = 0.0;
+        m_intakeDemand = -.05;
     }
 
     public double coralRange() {
@@ -66,7 +66,7 @@ public class CoralIntake extends SubsystemBase {
     }
 
     public boolean isInTrough(){
-        return (TOF.getRange() < 210 && TOF.getRange() > 180 && isRangeValid()); //TODO
+        return (TOF.getRange() < 205 && TOF.getRange() > 165 && isRangeValid()); //TODO
     }
 
     public void setIntakeVoltage(double IntakeVoltage) {

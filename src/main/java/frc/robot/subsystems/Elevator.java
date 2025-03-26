@@ -7,7 +7,6 @@ import java.util.function.DoubleSupplier;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -24,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.MechanismConstants;
-import frc.robot.generated.TunerConstants;
 
 public class Elevator extends SubsystemBase {
 
@@ -148,11 +146,6 @@ public class Elevator extends SubsystemBase {
         m_demand = 0.0;
     }
 
-    public void stopManual() {
-        m_controlMode = ControlMode.kPID;
-        m_demand = 0.0;
-    }
-
     public void setOutputVoltage(double OutputVoltage) {
         m_controlMode = ControlMode.kOpenLoop;
         m_demand = OutputVoltage;
@@ -184,7 +177,7 @@ public class Elevator extends SubsystemBase {
     
     public Command openLoopCommand(DoubleSupplier OutputVoltageSupplier) {
         return Commands.runEnd(
-            () -> this.setOutputVoltage(OutputVoltageSupplier.getAsDouble()), this::stopManual, this);
+            () -> this.setOutputVoltage(OutputVoltageSupplier.getAsDouble()), this::stop, this);
     }
 
     public Command openLoopCommand(double OutputVoltage) {

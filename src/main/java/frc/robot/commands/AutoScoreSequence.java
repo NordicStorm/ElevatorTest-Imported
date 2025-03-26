@@ -11,6 +11,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ConditionalCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ProxyCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants;
@@ -209,7 +210,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             public void end(boolean interrupted) {
                 drivetrain.drive(new ChassisSpeeds());
                 if(interrupted)
-                    intake.setIntakeVoltage(0);
+                    intake.stop();
             }
 
         });
@@ -288,9 +289,9 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                             }
                         })
 
-                ), new ProxyCommand((new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
+                ), new InstantCommand(()->(new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
                         .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)))
-                        .unless(() -> !hopperImmediately)),
+                        .unless(() -> !hopperImmediately).schedule()),
                 () -> level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0));
     }
 
@@ -342,6 +343,10 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
         speeds.omegaRadiansPerSecond = Math.toRadians(rotationPID.calculate(drivetrain.getGyroDegrees(), rotation));
 
         drivetrain.drive(speeds);
+    }
+    @Override
+    public double getRequestedStartSpeed() {
+        return 1;
     }
 
 }

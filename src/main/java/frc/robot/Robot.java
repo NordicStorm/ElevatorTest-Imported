@@ -54,7 +54,7 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run(); 
     SmartDashboard.putData("command", CommandScheduler.getInstance());
-
+    
   
   }
 
@@ -87,7 +87,7 @@ public class Robot extends TimedRobot {
     // continue until interrupted by another command, remove
     // this line or comment it out.
     if (m_autonomousCommand != null) {
-      m_autonomousCommand.cancel();
+    //  m_autonomousCommand.cancel();
     }
   }
 

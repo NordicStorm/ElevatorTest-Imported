@@ -22,7 +22,6 @@ public class MoveUpperSubsystems extends Command implements CommandPathPiece{
         this.m_elevator = elevator;
         this.m_arm = arm;
         this.m_wrist = wrist;
-        addRequirements(m_arm, m_elevator, m_wrist);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import java.util.Arrays;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.wpilibj.Timer;

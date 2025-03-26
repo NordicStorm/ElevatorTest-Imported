@@ -31,6 +31,7 @@ public final class Autos extends SequentialCommandGroup {
     private Wrist m_wrist;
     private Vision m_vision;
     private CoralIntake m_intake;
+    public boolean isInitialized = false;
 
     public Autos(CommandSwerveDrivetrain drivetrain, Wrist wrist, Arm arm, Elevator elevator, Vision vision,
             CoralIntake intake) {
@@ -57,6 +58,7 @@ public final class Autos extends SequentialCommandGroup {
     public void initializeCommands() {
         // !PATHWEAVER_INFO: {"trackWidth":0.962025,"gameName":"Reefscape"}
         MultiPartPath pathA;
+        
         pathA = new MultiPartPath(m_drivetrain);
         boolean isBlue = DriverStation.getAlliance().get() == Alliance.Blue;
         m_drivetrain.resetRotation(m_drivetrain.getOperatorForwardDirection().plus(Rotation2d.fromDegrees(180)));
@@ -84,14 +86,14 @@ public final class Autos extends SequentialCommandGroup {
                 feederStationAngle = isBlue ? -54 : 126;
             }
 
-            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, firstCoralLeft, 0));
+            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L2, firstCoralLeft, 0));
             pathA.setHeading(AutoScoreSequence.angleMap.get(firstTagID));
-            pathA.addWaypoint(6.302, 2.249);
+            pathA.addWaypoint(5.812, 2.019);
             pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, true, firstTagID));// ENDPOS:5.383,2.953
             pathA.setHeading(feederStationAngle);
             pathA.addWaypoint(4.893, 2.187);
             for (int i = 0; i < 2; i++) { // path on
-                pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, i == 1, 0));
+                pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L2, i == 1, 0));
                 pathA.addWaypoint(2.536, 1.927);
                 pathA.addSequentialCommand(new AutoReceiveAlign(feederStationAngle, m_drivetrain, m_intake));// ENDPOS:1.235,0.948
                 pathA.addWaypoint(2.689, 2.004);
@@ -125,5 +127,6 @@ public final class Autos extends SequentialCommandGroup {
             }
         }
         addCommands(pathA.finalizePath());
+        isInitialized = true;
     }
 }

@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import java.lang.Math;
 
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.AutoReceiveAlign;
@@ -25,21 +24,15 @@ import frc.robot.subsystems.Climber;
 // import frc.robot.subsystems.Intake;
 
 import com.ctre.phoenix6.SignalLogger;
-import com.ctre.phoenix6.mechanisms.swerve.LegacySwerveRequest.SwerveDriveBrake;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest.ForwardPerspectiveValue;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import static edu.wpi.first.units.Units.*;
 
 /**
@@ -59,10 +52,11 @@ public class RobotContainer {
   private final CoralIntake m_CoralIntake = new CoralIntake();
   private final Climber m_climber = new Climber();
   private final Vision m_vision = new Vision();
+  private Autos m_autos;
   
 
   public static boolean alignmentLeft = true; // True is right, False is left
-  public static Constants.Position targetLevel = Constants.Position.L3;
+  public static Constants.Position targetLevel = Constants.Position.L4;
   public static int rakeAlgae = 0; // 0 is none, 1 is low algae, 2 is high algae
   public static boolean isCoralMode = true;
 
@@ -75,7 +69,7 @@ public class RobotContainer {
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
 
-  private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .25; // TODO we changed value
+  private double MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .45; // TODO we changed value
                                                                                       // kSpeedAt12Volts desired top
                                                                                       // speed
   private double MaxAngularRate = RotationsPerSecond.of(0.75).in(RadiansPerSecond); // 3/4 of a rotation per second max
@@ -83,7 +77,7 @@ public class RobotContainer {
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-      .withDeadband(MaxSpeed * 0.2).withRotationalDeadband(MaxAngularRate * 0.2) // Add a 10% deadband
+      .withDeadband(MaxSpeed * 0.15).withRotationalDeadband(MaxAngularRate * 0.15) // Add a 10% deadband
       .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
@@ -97,6 +91,11 @@ public class RobotContainer {
     //SignalLogger.start();
     Autos.putToDashboard();
     configureBindings();
+    SmartDashboard.putBoolean("Is auto initialized?", false);
+    SmartDashboard.putData("Set Auto", new InstantCommand(() -> {
+      m_autos = new Autos(drivetrain, m_wrist, m_arm, m_elevator, m_vision, m_CoralIntake);
+      SmartDashboard.putBoolean("Is auto initialized?", m_autos.isInitialized);
+      }).ignoringDisable(true));
   }
 
   /**
@@ -152,7 +151,7 @@ public class RobotContainer {
     m_driverController.back().onTrue(new InstantCommand(() -> isCoralMode = !isCoralMode));
     m_driverController.a().whileTrue(new AutoReceiveAlign(0, drivetrain, m_CoralIntake));
 
-    
+
     m_secondController.y().whileTrue(m_elevator.openLoopCommand(() -> 1));
     m_secondController.a().whileTrue(m_elevator.openLoopCommand(() -> -1));
     m_secondController.b().whileTrue(new MoveUpperSubsystems(() -> Constants.Position.L3, m_arm, m_elevator, m_wrist));
@@ -166,6 +165,9 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return new Autos(drivetrain, m_wrist, m_arm, m_elevator, m_vision, m_CoralIntake);
+    if (m_autos == null){
+      m_autos = new Autos(drivetrain, m_wrist, m_arm, m_elevator, m_vision, m_CoralIntake);
+    }
+    return m_autos;
   }
 }
