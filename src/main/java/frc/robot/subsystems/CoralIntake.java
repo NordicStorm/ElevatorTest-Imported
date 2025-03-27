@@ -54,7 +54,7 @@ public class CoralIntake extends SubsystemBase {
     }
 
     public void stop() {
-        m_intakeDemand = -.05;
+        m_intakeDemand = -.1;
     }
 
     public double coralRange() {

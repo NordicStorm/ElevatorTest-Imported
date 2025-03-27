@@ -30,7 +30,7 @@ import static java.util.Map.entry;
 import java.io.IOException;
 
 public class AutoScoreSequence extends SequentialCommandGroup implements CommandPathPiece {
-   public static  Map<Integer, Double> angleMap = Map.ofEntries(
+    public static Map<Integer, Double> angleMap = Map.ofEntries(
             entry(17, 60.0),
             entry(18, 0.0),
             entry(19, -60.0),
@@ -209,7 +209,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             @Override
             public void end(boolean interrupted) {
                 drivetrain.drive(new ChassisSpeeds());
-                if(interrupted)
+                if (interrupted)
                     intake.stop();
             }
 
@@ -225,7 +225,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             @Override
             public boolean isFinished() {
                 if (level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0) {
-                    return drivetrain.getFrontRange() > 0.5;
+                    return drivetrain.getFrontRange() > 0.35;
                 } else {
                     return drivetrain.getFrontRange() > 0.5;
                 }
@@ -243,15 +243,15 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
             @Override
             public void initialize() {
-                timeToEnd = System.currentTimeMillis() + 500;
+                timeToEnd = System.currentTimeMillis() + 250;
             }
 
             @Override
             public void execute() {
                 if (RobotContainer.alignmentLeft) {
-                    drivetrain.drive(new ChassisSpeeds(0, 1, 0));
-                } else {
                     drivetrain.drive(new ChassisSpeeds(0, -1, 0));
+                } else {
+                    drivetrain.drive(new ChassisSpeeds(0, 1, 0));
                 }
             }
 
@@ -260,8 +260,18 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 return System.currentTimeMillis() >= timeToEnd;
             }
 
+            @Override
+            public void end(boolean interrupted) {
+                drivetrain.drive(new ChassisSpeeds());
+            }
+
         }.alongWith(new MoveUpperSubsystems(() -> RobotContainer.rakeAlgae == 1 ? Constants.Position.BEFORE_LOWER_ALGAE
                 : Constants.Position.BEFORE_UPPER_ALGAE, arm, elevator, wrist))).andThen(new Command() {
+                    @Override
+                    public void initialize() {
+                        intake.setIntakeVoltage(.25);
+                    }
+
                     @Override
                     public void execute() {
                         drivetrain.drive(new ChassisSpeeds(1, 0, 0));
@@ -269,9 +279,14 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
                     @Override
                     public boolean isFinished() {
-                        return drivetrain.getFrontRange() < .1;
+                        return drivetrain.getFrontRange() < .2;
                     }
 
+                    @Override
+                    public void end(boolean interrupted) {
+                        if (interrupted)
+                            intake.stop();
+                    }
                 })
                 .andThen(new MoveUpperSubsystems(
                         () -> RobotContainer.rakeAlgae == 1 ? Constants.Position.AFTER_LOWER_ALGAE
@@ -285,11 +300,18 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
                             @Override
                             public boolean isFinished() {
-                                return drivetrain.getFrontRange() > .3;
+                                return drivetrain.getFrontRange() > .5;
+                            }
+
+                            @Override
+                            public void end(boolean interrupted) {
+                                intake.stop();
                             }
                         })
 
-                ), new InstantCommand(()->(new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator, wrist)
+                ),
+                new InstantCommand(() -> (new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator,
+                        wrist)
                         .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)))
                         .unless(() -> !hopperImmediately).schedule()),
                 () -> level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0));
@@ -344,6 +366,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
         drivetrain.drive(speeds);
     }
+
     @Override
     public double getRequestedStartSpeed() {
         return 1;

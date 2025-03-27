@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.commands.paths.DriveTrainConfig;
 import frc.robot.commands.paths.PathableDrivetrain;
@@ -293,6 +294,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("Back CAN range", m_backCANrange.getDistance().getValueAsDouble());
         SmartDashboard.putString("Target Level", RobotContainer.targetLevel.toString());
         SmartDashboard.putBoolean("Target Left Side?", RobotContainer.alignmentLeft);
+        SmartDashboard.putNumber("Algae level?", RobotContainer.rakeAlgae);
+        SmartDashboard.putBoolean("Coral Mode?", RobotContainer.isCoralMode);
         m_fieldDisplay.setRobotPose(getState().Pose);
 
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {

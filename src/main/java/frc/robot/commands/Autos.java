@@ -72,9 +72,10 @@ public final class Autos extends SequentialCommandGroup {
 
         boolean firstCoralLeft = SmartDashboard.getBoolean("First Coral Left?", false);
 
+
         String startingPosition = chooser.getSelected();
         if (isLeft || isRight) { // path on
-            pathA.resetPosition(7.620, 1.854); 
+            pathA.resetPosition(7.174, 1.897); 
 
             if (isRight) {
                 firstTagID = isBlue ? 22 : 9;
@@ -86,14 +87,14 @@ public final class Autos extends SequentialCommandGroup {
                 feederStationAngle = isBlue ? -54 : 126;
             }
 
-            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L2, firstCoralLeft, 0));
+            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, firstCoralLeft, 0));
             pathA.setHeading(AutoScoreSequence.angleMap.get(firstTagID));
-            pathA.addWaypoint(5.812, 2.019);
+            pathA.addWaypoint(6.041, 2.249);
             pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, true, firstTagID));// ENDPOS:5.383,2.953
             pathA.setHeading(feederStationAngle);
             pathA.addWaypoint(4.893, 2.187);
             for (int i = 0; i < 2; i++) { // path on
-                pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L2, i == 1, 0));
+                pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, i == 1, 0));
                 pathA.addWaypoint(2.536, 1.927);
                 pathA.addSequentialCommand(new AutoReceiveAlign(feederStationAngle, m_drivetrain, m_intake));// ENDPOS:1.235,0.948
                 pathA.addWaypoint(2.689, 2.004);

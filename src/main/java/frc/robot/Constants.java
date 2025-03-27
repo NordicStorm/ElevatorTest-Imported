@@ -39,8 +39,8 @@ public final class Constants {
     public static final int kClimberID = 23;
     public static final double kRotationToInches = .418; // 1.0/20.0 * ((68.8/25.4)/2) * Math.PI * 2.0;//TODO: Find the
                                                          // correct value
-    public static final double kWristVerticalPos = 0.035;
-    public static final double kWristHorizontalPos = -0.209;
+    public static final double kWristVerticalPos = 0.045;
+    public static final double kWristHorizontalPos = -0.2;
   }
 
   public static class ArmConstants {
@@ -73,13 +73,15 @@ public final class Constants {
 
     L4(.1, MechanismConstants.kWristHorizontalPos, 46, .45- 0.238-.03),
 
-    BEFORE_UPPER_ALGAE(.1, MechanismConstants.kWristVerticalPos, 46, .032),
+    BEFORE_UPPER_ALGAE(0, MechanismConstants.kWristVerticalPos, 46, .032),
 
-    AFTER_UPPER_ALGAE(.05, MechanismConstants.kWristVerticalPos, 46, .032),
+    AFTER_UPPER_ALGAE(0, MechanismConstants.kWristVerticalPos, 43, .05),
 
-    BEFORE_LOWER_ALGAE(.1, MechanismConstants.kWristVerticalPos, 30, .032),
+    BEFORE_LOWER_ALGAE(0, MechanismConstants.kWristVerticalPos, 29, .032),
 
-    AFTER_LOWER_ALGAE(.05, MechanismConstants.kWristVerticalPos, 30, .05);
+    AFTER_LOWER_ALGAE(0, MechanismConstants.kWristVerticalPos, 25, .05),
+
+    CLIMBER(.2, MechanismConstants.kWristHorizontalPos, 0, 0);
 
 
     public final double armAngle;
