@@ -53,6 +53,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             .withDriveRequestType(DriveRequestType.Velocity);
 
     private final Spark blinkinPark = new Spark(0);
+    
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private static final Rotation2d kBlueAlliancePerspectiveRotation = Rotation2d.kZero;
@@ -294,8 +295,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
         SmartDashboard.putNumber("Back CAN range", m_backCANrange.getDistance().getValueAsDouble());
         SmartDashboard.putString("Target Level", RobotContainer.targetLevel.toString());
         SmartDashboard.putBoolean("Target Left Side?", RobotContainer.alignmentLeft);
-        SmartDashboard.putNumber("Algae level?", RobotContainer.rakeAlgae);
+        SmartDashboard.putNumber("Algae mode?", RobotContainer.algaeMode);
         SmartDashboard.putBoolean("Coral Mode?", RobotContainer.isCoralMode);
+        SmartDashboard.putBoolean("Is C2 active?", RobotContainer.isSecondControllerActive);
         m_fieldDisplay.setRobotPose(getState().Pose);
 
         if (!m_hasAppliedOperatorPerspective || DriverStation.isDisabled()) {

@@ -99,7 +99,7 @@ public class Arm extends SubsystemBase {
         m_motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
         m_motorConfig.MotionMagic.MotionMagicCruiseVelocity = 80; // Rotations Per second
         m_motorConfig.MotionMagic.MotionMagicAcceleration = 10;
-        m_motorConfig.ClosedLoopRamps.VoltageClosedLoopRampPeriod = .5;
+        m_motorConfig.ClosedLoopRamps.VoltageClosedLoopRampPeriod = 1;
         // velocity
         m_motorConfig.MotionMagic.MotionMagicExpo_kV = .12; // kV is around 0.12 V/rps
         m_motorConfig.MotionMagic.MotionMagicExpo_kA = .1; // Use a slower kA of 0.1 V/(rps/s)

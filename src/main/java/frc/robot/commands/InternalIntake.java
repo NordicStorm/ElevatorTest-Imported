@@ -9,20 +9,26 @@ import frc.robot.subsystems.CoralIntake;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Wrist;
 
-public class InternalIntake extends SequentialCommandGroup{
-    
-    public InternalIntake(Arm arm, Elevator elevator, Wrist wrist, CoralIntake intake){
+public class InternalIntake extends SequentialCommandGroup {
+
+    public InternalIntake(Arm arm, Elevator elevator, Wrist wrist, CoralIntake intake) {
         addCommands(new MoveUpperSubsystems(() -> Position.HOPPER_INTAKE, arm, elevator, wrist));
-        addCommands(new Command(){
+        addCommands(new Command() {
+
+            long timeToEnd;
+
             @Override
             public void initialize() {
                 intake.setIntakeVoltage(-.75);
                 elevator.setPID(Constants.Position.INTERNAL_INTAKE.elevatorPos);
+                timeToEnd = System.currentTimeMillis() + 500;
             }
+
             @Override
             public boolean isFinished() {
-                return intake.hasCoral();
+                return intake.hasCoral() || timeToEnd < System.currentTimeMillis();
             }
+
             @Override
             public void end(boolean interrupted) {
                 intake.stop();
@@ -30,5 +36,4 @@ public class InternalIntake extends SequentialCommandGroup{
             }
         });
     }
-    
 }

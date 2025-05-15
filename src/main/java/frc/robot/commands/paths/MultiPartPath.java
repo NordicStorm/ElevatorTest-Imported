@@ -269,10 +269,7 @@ public class MultiPartPath {
             boolean interrupts = pieceInfo.getSecond();
             if (piece.getPieceType() == PieceType.Waypoint) {
                 waypoints.add((WaypointPiece) piece);
-                System.out.println("wayp");
-
             } else {
-                System.out.println("seq" + piece.getClass().getSimpleName());
                 var commandPiece = (CommandPathPiece) piece;
                 if (interrupts) { // ok, this takes over driving so we should make the
                                   // trajectory leading up to here.
@@ -281,7 +278,6 @@ public class MultiPartPath {
                                 new ArrayList<WaypointPiece>(waypoints), // copy of current list
                                 commandPiece.getRequestedStartSpeed(), this));
                         waypoints.clear();
-                        System.out.println("Taj make");
                     }
                     actualCommands.add((Command)commandPiece);
                 } else {
@@ -328,6 +324,15 @@ public class MultiPartPath {
      */
     public ProfiledPIDController getRotationController() {
         return rotationController;
+    }
+
+    /**
+     * This calls the trajectory generation functions so that they are loaded at runtime,
+     * preventing a delay upon starting auto. This should be called at some point before 
+     * you run an auto.
+     */
+    public static void preloadClasses() {
+        DummyPath.fakeSetup();
     }
 
 }

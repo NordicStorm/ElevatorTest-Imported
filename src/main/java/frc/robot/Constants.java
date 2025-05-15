@@ -46,7 +46,7 @@ public final class Constants {
   public static class ArmConstants {
     public static final double kArmStraightUp = 0.4934 - .25; // TODO make Cam finish the constants
     public static final double kArmStraightOut = 0;
-    public static final double kArmStraightDown = -.265;
+    public static final double kArmStraightDown = -.255;
     public static final double kArmAfterMiddleCoralOutake = .08;
   }
 
@@ -81,7 +81,7 @@ public final class Constants {
 
     AFTER_LOWER_ALGAE(0, MechanismConstants.kWristVerticalPos, 25, .05),
 
-    CLIMBER(.2, MechanismConstants.kWristHorizontalPos, 0, 0);
+    CLIMBER(.23, MechanismConstants.kWristHorizontalPos, -.25, 0);
 
 
     public final double armAngle;

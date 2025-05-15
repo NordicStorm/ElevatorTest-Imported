@@ -25,6 +25,9 @@ import frc.robot.subsystems.Vision;
 import frc.robot.subsystems.Wrist;
 
 import java.util.Map;
+
+import com.ctre.phoenix6.signals.ConnectedMotorValue;
+
 import static java.util.Map.entry;
 
 import java.io.IOException;
@@ -44,6 +47,22 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             entry(9, -60.0),
             entry(10, 0.0),
             entry(11, 60.0));
+    
+    public static Map<Integer, Integer> ballMap = Map.ofEntries(
+        entry(17, 1),
+        entry(18, 2),
+        entry(19, 1),
+        entry(20, 2),
+        entry(21, 1),
+        entry(22, 2),
+
+        entry(6, 1),
+        entry(7, 2),
+        entry(8, 1),
+        entry(9, 2),
+        entry(10, 1),
+        entry(11, 2));
+
     private boolean invalidTag;
     private int targetTagID;
 
@@ -86,7 +105,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 xDistance = 999;
                 yError = 999;
                 rotationPID = new ProfiledPIDController(10, 0, 0, new Constraints(400, 300));
-                xPID = new ProfiledPIDController(5, 0, 0, new Constraints(4, 2));
+                xPID = new ProfiledPIDController(5, 0, 0, new Constraints(2, 4));
                 yPID = new ProfiledPIDController(5, 0, 0, new Constraints(4, 2));
                 rotationPID.enableContinuousInput(-180, 180);
                 rotationPID.reset(drivetrain.getGyroDegrees());
@@ -181,7 +200,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
             }
 
             @Override
-            public void execute() {
+            public void execute() { //Place coral onto designated level
                 if (level == Constants.Position.L1) {
                     intake.setIntakeVoltage(1);
                 } else if (level == Constants.Position.L2 || level == Constants.Position.L3) {
@@ -218,13 +237,13 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
         addCommands(new Command() {
 
             @Override
-            public void execute() {
+            public void execute() { //Back up off of the reef after placing the coral
                 drivetrain.drive(new ChassisSpeeds(-1, 0, 0));
             }
 
             @Override
             public boolean isFinished() {
-                if (level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0) {
+                if (level == Constants.Position.L4 && RobotContainer.algaeMode != 0) {
                     return drivetrain.getFrontRange() > 0.35;
                 } else {
                     return drivetrain.getFrontRange() > 0.5;
@@ -265,8 +284,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                 drivetrain.drive(new ChassisSpeeds());
             }
 
-        }.alongWith(new MoveUpperSubsystems(() -> RobotContainer.rakeAlgae == 1 ? Constants.Position.BEFORE_LOWER_ALGAE
-                : Constants.Position.BEFORE_UPPER_ALGAE, arm, elevator, wrist))).andThen(new Command() {
+        }.alongWith(new MoveUpperSubsystems(() -> algaePosition(RobotContainer.algaeMode, true), arm, elevator, wrist))).andThen(new Command() {
                     @Override
                     public void initialize() {
                         intake.setIntakeVoltage(.25);
@@ -279,7 +297,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
 
                     @Override
                     public boolean isFinished() {
-                        return drivetrain.getFrontRange() < .2;
+                        return drivetrain.getFrontRange() < .18;
                     }
 
                     @Override
@@ -289,8 +307,7 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                     }
                 })
                 .andThen(new MoveUpperSubsystems(
-                        () -> RobotContainer.rakeAlgae == 1 ? Constants.Position.AFTER_LOWER_ALGAE
-                                : Constants.Position.AFTER_UPPER_ALGAE,
+                        () -> algaePosition(RobotContainer.algaeMode, false),
                         arm, elevator, wrist)
                         .alongWith(new Command() {
                             @Override
@@ -309,12 +326,18 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
                             }
                         })
 
-                ),
+                )
+                .andThen(new InstantCommand(() -> (new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm,
+                        elevator,
+                        wrist)
+                        .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)))
+                        .unless(() -> !hopperImmediately).schedule())),
+
                 new InstantCommand(() -> (new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, arm, elevator,
                         wrist)
                         .andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, arm, elevator, wrist)))
                         .unless(() -> !hopperImmediately).schedule()),
-                () -> level == Constants.Position.L4 && RobotContainer.rakeAlgae > 0));
+                () -> level == Constants.Position.L4 && RobotContainer.algaeMode != 0));
     }
 
     private void doMovement(double targetDistance, CommandSwerveDrivetrain drivetrain, Vision vision) {
@@ -365,6 +388,15 @@ public class AutoScoreSequence extends SequentialCommandGroup implements Command
         speeds.omegaRadiansPerSecond = Math.toRadians(rotationPID.calculate(drivetrain.getGyroDegrees(), rotation));
 
         drivetrain.drive(speeds);
+    }
+
+    public static Constants.Position algaePosition(int algaeMode, boolean before) {
+        if (before) {
+             return algaeMode == 1 ? Constants.Position.BEFORE_LOWER_ALGAE : Constants.Position.BEFORE_UPPER_ALGAE;
+        }
+        else {
+            return algaeMode == 1 ? Constants.Position.AFTER_LOWER_ALGAE : Constants.Position.AFTER_UPPER_ALGAE;
+        }
     }
 
     @Override

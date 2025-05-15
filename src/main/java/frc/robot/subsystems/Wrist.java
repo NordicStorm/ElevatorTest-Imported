@@ -45,7 +45,7 @@ public class Wrist extends SubsystemBase {
         wristConfig.Slot0.kP = 70; // TODO: A position error of 2.5 rotations results in 12 V output
         wristConfig.Slot0.kI = 0; // TODO: no output for integrated error
         wristConfig.Slot0.kD = 3; // TODO: A velocity error of 1 rps results in 0.1 V output
-        wristConfig.Slot0.kS = 1.8;
+        wristConfig.Slot0.kS = 1;
         wristConfig.Slot0.StaticFeedforwardSign = StaticFeedforwardSignValue.UseClosedLoopSign;
 
         wristConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;

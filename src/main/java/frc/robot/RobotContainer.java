@@ -56,9 +56,9 @@ public class RobotContainer {
 
   public static boolean alignmentLeft = true; // True is right, False is left
   public static Constants.Position targetLevel = Constants.Position.L4;
-  public static int rakeAlgae = 0; // 0 is none, 1 is low algae, 2 is high algae
+  public static int algaeMode = 0; // 0 is none, 1 is low algae, 2 is high algae
   public static boolean isCoralMode = true;
-  private boolean isSecondControllerActive = false;
+  public static  boolean isSecondControllerActive = false;
 
   // Replace with CommandPS4Controller or Commandm_driverController if needed
   private final CommandXboxController m_driverController = new CommandXboxController(
@@ -113,8 +113,6 @@ public class RobotContainer {
    * m_driverControllers}.
    */
   private void configureBindings() {
-    m_driverController.start()
-        .onTrue(new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, m_arm, m_elevator, m_wrist));
     drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
         drivetrain.applyRequest(() -> drive.withVelocityX(MaxSpeed * -m_driverController.getLeftY()) // Drive forward
@@ -124,47 +122,58 @@ public class RobotContainer {
             .withRotationalRate(-m_driverController.getRightX() * MaxAngularRate) // Drive counterclockwise with
                                                                                   // negative X (left)
         ));
-    new Trigger(() -> m_CoralIntake.isInTrough() && m_arm.isAtSetPoint()
+    new Trigger(() -> m_CoralIntake.isInTrough() && m_arm.isAtSetPoint() //Auto trigger for grabbing the piece when it is in the trough
         && m_arm.getArmGeneralPosition() == GeneralArmPosition.straightDown
         && m_wrist.isHorizontal() && m_elevator.isAtGrabHeight()).debounce(.5)
         .onTrue(new InternalIntake(m_arm, m_elevator, m_wrist, m_CoralIntake));
 
     // reset the field-centric heading on left bumper press
-    m_driverController.leftBumper().and(m_driverController.rightBumper())
+    m_driverController.leftBumper().and(m_driverController.rightBumper()) //Reset Gyro
         .onTrue(drivetrain.runOnce(() -> drivetrain.resetRotation(Rotation2d.kZero)));
 
-    // drivetrain.registerTelemetry(logger::telemeterize);
 
-    m_driverController.leftTrigger().and(() -> !isCoralMode).whileTrue(m_climber.openLoopClimbCommand(.25));
-    m_driverController.rightTrigger().and(() -> !isCoralMode).whileTrue(m_climber.openLoopClimbCommand(-.25));
+    m_driverController.leftTrigger().and(() -> !isCoralMode).whileTrue(m_climber.openLoopClimbCommand(.5)); //Climber commands for when Climb mode is active
+    m_driverController.rightTrigger().and(() -> !isCoralMode).whileTrue(m_climber.openLoopClimbCommand(-.4));
 
-    // m_driverController.leftTrigger().onTrue(new MoveUpperSubsystems(() -> Constants.Position.BEFORE_LOWER_ALGAE, m_arm, m_elevator, m_wrist));
-    // m_driverController.rightTrigger().onTrue(new MoveUpperSubsystems(() -> Constants.Position.AFTER_LOWER_ALGAE, m_arm, m_elevator, m_wrist));
-
-    // m_driverController.leftBumper().onTrue(new MoveUpperSubsystems(() -> Constants.Position.BEFORE_UPPER_ALGAE, m_arm, m_elevator, m_wrist));
-    // m_driverController.rightBumper().onTrue(new MoveUpperSubsystems(() -> Constants.Position.AFTER_UPPER_ALGAE, m_arm, m_elevator, m_wrist));
-
-    m_driverController.leftTrigger().and(() -> isCoralMode).whileTrue(new InstantCommand(() -> alignmentLeft = true)
+    m_driverController.leftTrigger().and(() -> isCoralMode).onTrue(new InstantCommand(() -> algaeMode = 0)).whileTrue(new InstantCommand(() -> alignmentLeft = true) //Auto score right/left
         .andThen(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0)));
-    m_driverController.rightTrigger().and(() -> isCoralMode).whileTrue(new InstantCommand(() -> alignmentLeft = false)
+    m_driverController.rightTrigger().and(() -> isCoralMode).onTrue(new InstantCommand(() -> algaeMode = 0)).whileTrue(new InstantCommand(() -> alignmentLeft = false)
         .andThen(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0)));
 
-    // m_driverController.povLeft().whileTrue(drivetrain.applyRequest(()->drive.withDriveRequestType(DriveRequestType.Velocity).withVelocityX(4.5)));
-    m_driverController.povUp().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L1));
-    m_driverController.povRight().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L2));
-    m_driverController.povDown().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L3));
-    m_driverController.povLeft().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L4));
+
+    m_driverController.leftBumper().and(() -> isCoralMode).onTrue(new InstantCommand(() -> algaeMode = 1)).whileTrue(new InstantCommand(() -> alignmentLeft = true) //Auto score right/left
+        .andThen(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0)));
+    m_driverController.rightBumper().and(() -> isCoralMode).onTrue(new InstantCommand(() -> algaeMode = 2)).whileTrue(new InstantCommand(() -> alignmentLeft = false)
+        .andThen(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_CoralIntake, drivetrain, m_vision, true, 0)));
+
+
+
+    m_driverController.povUp().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L1)); //Up = 1
+    m_driverController.povRight().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L2)); //Right = 2
+    m_driverController.povDown().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L3)); //Down = 3
+    m_driverController.povLeft().onTrue(new InstantCommand(() -> targetLevel = Constants.Position.L4)); //Left = 4
 
     m_driverController.y()
-        .onTrue(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
-    m_driverController.back().onTrue(new InstantCommand(() -> isCoralMode = !isCoralMode));
-    m_driverController.a().whileTrue(new AutoReceiveAlign(0, drivetrain, m_CoralIntake));
+        .onTrue(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist)); //Hopper position on y press
+    m_driverController.a().whileTrue(new AutoReceiveAlign(0, drivetrain, m_CoralIntake)); //Align with feeder station
+    m_driverController.b().onTrue(new MoveUpperSubsystems(() -> Constants.Position.GROUND_INTAKE, m_arm, m_elevator, m_wrist)); //Ground intake on b press
 
-    m_driverController.rightBumper()
-        .whileTrue(Commands.runEnd(() -> MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .75,
-            () -> MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .55));
+    m_driverController.start() //Elevator zero on start when in coral mode
+    .and(() -> isCoralMode)
+    .onTrue(new MoveUpperSubsystems(() -> Constants.Position.ELEVATOR_ZERO, m_arm, m_elevator, m_wrist).andThen(new MoveUpperSubsystems(() -> Constants.Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist)));
+    m_driverController.start() //Set to Climber position when in climb mode
+    .and(() -> !isCoralMode)
+    .onTrue(new MoveUpperSubsystems(() -> Constants.Position.CLIMBER, m_arm, m_elevator, m_wrist));
 
-    m_driverController.leftBumper().onTrue(new InstantCommand(() -> rakeAlgae = (rakeAlgae + 1) % 3));
+    m_driverController.back().onTrue(new InstantCommand(() -> isCoralMode = !isCoralMode)); //Switch coral/climb
+
+
+
+    //m_driverController.rightBumper()
+      //  .whileTrue(Commands.runEnd(() -> MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .75,
+        //    () -> MaxSpeed = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * .55));
+    //m_driverController.rightBumper().onTrue(new MoveUpperSubsystems(() -> targetLevel, m_arm, m_elevator, m_wrist));
+
 
     m_secondController.y().and(() -> isSecondControllerActive).whileTrue(m_elevator.openLoopCommand(() -> 1));
     m_secondController.a().and(() -> isSecondControllerActive).whileTrue(m_elevator.openLoopCommand(() -> -1));

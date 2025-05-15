@@ -48,6 +48,7 @@ public final class Autos extends SequentialCommandGroup {
 
     public static void putToDashboard() {
         SmartDashboard.putBoolean("First Coral Left?", false);
+        SmartDashboard.putBoolean("Do center algae?", true);
         
         chooser.addOption("Left", "Left");
         chooser.addOption("Center", "Center");
@@ -57,8 +58,8 @@ public final class Autos extends SequentialCommandGroup {
 
     public void initializeCommands() {
         // !PATHWEAVER_INFO: {"trackWidth":0.962025,"gameName":"Reefscape"}
+        MultiPartPath.preloadClasses();
         MultiPartPath pathA;
-        
         pathA = new MultiPartPath(m_drivetrain);
         boolean isBlue = DriverStation.getAlliance().get() == Alliance.Blue;
         m_drivetrain.resetRotation(m_drivetrain.getOperatorForwardDirection().plus(Rotation2d.fromDegrees(180)));
@@ -70,6 +71,7 @@ public final class Autos extends SequentialCommandGroup {
         boolean isCenter = chooser.getSelected().equals("Center");
         boolean isRight = chooser.getSelected().equals("Right");
 
+        boolean doAlgae = SmartDashboard.getBoolean("Do center algae?", true);
         boolean firstCoralLeft = SmartDashboard.getBoolean("First Coral Left?", false);
 
 
@@ -87,19 +89,24 @@ public final class Autos extends SequentialCommandGroup {
                 feederStationAngle = isBlue ? -54 : 126;
             }
 
-            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, firstCoralLeft, 0));
+            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, firstCoralLeft, 1));
             pathA.setHeading(AutoScoreSequence.angleMap.get(firstTagID));
-            pathA.addWaypoint(6.041, 2.249);
+            pathA.addWaypoint(5.858, 2.080);
             pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, true, firstTagID));// ENDPOS:5.383,2.953
             pathA.setHeading(feederStationAngle);
             pathA.addWaypoint(4.893, 2.187);
-            for (int i = 0; i < 2; i++) { // path on
-                pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, i == 1, 0));
-                pathA.addWaypoint(2.536, 1.927);
-                pathA.addSequentialCommand(new AutoReceiveAlign(feederStationAngle, m_drivetrain, m_intake));// ENDPOS:1.235,0.948
-                pathA.addWaypoint(2.689, 2.004);
-                pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, true, secondTagID));// ENDPOS:3.699,2.922
-            }
+            pathA.addWaypoint(2.536, 1.927);
+            pathA.addSequentialCommand(new AutoReceiveAlign(feederStationAngle, m_drivetrain, m_intake));// ENDPOS:1.235,0.948
+            pathA.addWaypoint(2.689, 2.004);
+
+            
+            // for (int i = 0; i < 2; i++) { // path on
+            //     pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, i == 1, false));
+            //     pathA.addWaypoint(2.536, 1.927);
+            //     pathA.addSequentialCommand(new AutoReceiveAlign(feederStationAngle, m_drivetrain, m_intake));// ENDPOS:1.235,0.948
+            //     pathA.addWaypoint(2.689, 2.004);
+            //     pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, true, secondTagID));// ENDPOS:3.699,2.922
+            // }
 
         } else { // path off
             if (isBlue) {
@@ -109,10 +116,11 @@ public final class Autos extends SequentialCommandGroup {
                 firstTagID = 10;
             }
 
-            pathA.resetPosition(7.620, 3.810);
-            pathA.addParallelCommand(new SetAutoScoreParameters(Constants.Position.L4, firstCoralLeft, 0));
-            pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, false, firstTagID));// ENDPOS:5.888,3.902
-            pathA.addParallelCommand(new MoveUpperSubsystems(() -> Position.HOPPER_INTAKE, m_arm, m_elevator, m_wrist));
+            pathA.resetPosition(7.128, 3.841);
+            pathA.addStop(2000);
+            pathA.addSequentialCommand(new SetAutoScoreParameters(Constants.Position.L4, firstCoralLeft, 0));// nomove
+            pathA.addSequentialCommand(new AutoScoreSequence(m_arm, m_elevator, m_wrist, m_intake, m_drivetrain, m_vision, true, firstTagID));// ENDPOS:5.888,3.902
+            pathA.addStop();
         }
 
         pathA.addStop();
